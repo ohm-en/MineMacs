@@ -25,6 +25,31 @@
 
 (global-set-key (kbd "C-x b") 'consult-buffer)
 #+end_src
+** Theme
+#+begin_src elisp :noweb-ref emacs-theme
+  (crafted-package-install-package 'modus-themes)
+
+  (use-package modus-themes
+   :ensure t
+   :config
+   (setq modus-themes-org-blocks 'grey-background
+       modus-themes-bold-constructs nil)
+   (setq modus-themes-common-palette-overrides
+       modus-themes-preset-overrides-intense)
+   (load-theme 'modus-operandi)
+   (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
+
+   (use-package org-bullets
+     :ensure t
+     :hook (org-mode . org-bullets-mode)
+     :config
+     (setq org-bullets-bullet-list '("◉" "○" "✸" "✿" "▶"))
+     (setq org-ellipsis "⤵")
+     (setq org-hide-leading-stars t))
+#+end_src
+
+#+RESULTS:
+| org-bullets-mode | yas-minor-mode | org-edna-mode | toc-org-mode | dw/org-mode-setup | #[0 \301\211\207 [imenu-create-index-function org-imenu-get-tree] 2] | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-fold-show-all append local] 5] | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-babel-show-result-all append local] 5] | org-babel-result-hide-spec | org-babel-hide-all-hashes |
 
 * Window & File Navigation
 :PROPERTIES:
@@ -767,7 +792,7 @@ And cmake appears to require make
           `(default ((t (:font "JetBrainsMono Nerd Font"))))
           `(fixed-pitch ((t (:inherit (default)))))
           `(fixed-pitch-serif ((t (:inherit (default)))))
-                                                  `(variable-pitch ((t (:font "Liberation Sans 18")))))))
+                                                  `(variable-pitch ((t (:font "Fira Sans")))))))
 
   <<emacs-hotkeys>>
 
@@ -927,27 +952,7 @@ And cmake appears to require make
   ;; Babel
   (org-babel-lob-ingest "~/Knowledgebase/Areas/The_Timeline/obsidian-daily-log-helper/README.org")
 
-  ;;;;;;;;;;;;;;
-  ;; Themeing ;;
-  ;;;;;;;;;;;;;;
-
-  (use-package modus-themes
-  :ensure t
-  :config
-  (setq modus-themes-org-blocks 'grey-background
-      modus-themes-bold-constructs nil)
-  ;; (setq modus-themes-common-palette-overrides
-  ;;      modus-themes-preset-overrides-intense)
-  (load-theme 'modus-operandi)
-  (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
-
-  (use-package org-bullets
-  :ensure t
-  :hook (org-mode . org-bullets-mode)
-  :config
-  (setq org-bullets-bullet-list '("◉" "○" "✸" "✿" "▶"))
-  ;;(setq org-ellipsis "⤵")
-  (setq org-hide-leading-stars t))
+  <<emacs-theme>>
 
   <<emacs-applications>>
 
