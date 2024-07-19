@@ -48,9 +48,6 @@
      (setq org-hide-leading-stars t))
 #+end_src
 
-#+RESULTS:
-| org-bullets-mode | yas-minor-mode | org-edna-mode | toc-org-mode | dw/org-mode-setup | #[0 \301\211\207 [imenu-create-index-function org-imenu-get-tree] 2] | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-fold-show-all append local] 5] | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-babel-show-result-all append local] 5] | org-babel-result-hide-spec | org-babel-hide-all-hashes |
-
 * Window & File Navigation
 :PROPERTIES:
 :header-args: :noweb-ref project-management
@@ -82,6 +79,7 @@
 :config (treemacs-set-scope-type 'Perspectives))
 #+end_src
 ** Project Management
+
 #+begin_src elisp 
   (use-package projectile
   :ensure t
@@ -107,9 +105,106 @@
       "pA" '(projectile-add-known-project :which-key "add known project")
       "pl" '(projectile-list-projects :which-key "list projects"))
 #+end_src
+* Notetaking
+:PROPERTIES:
+:header-args: :noweb-ref emacs-structured-notes 
+:END:
+** Org-Roam
 
-#+RESULTS:
+#+begin_src elisp 
+  (defun org-get-buffer-title ())
+  (let* ((parsed (org-element-parse-buffer 'element)))
+      (title (org-element-map parsed 'keyword
+              (lambda (k)
+                  (when (string-equal (org-element-property :key k) "TITLE"))
+                  (org-element-property :value k)))))
+  (when title)
+  (if (interactive-p)
+      (message (car title)))
+  (car title)
 
+  (defun get-current-headline-title())
+  (or (org-entry-get nil "ITEM") (car (cdr (car (org-collect-keywords '("title"))))))
+
+  (defun get-id-as-link ())
+  "Retrieves the org-id of the current headline or note, formats it as a URI, and copies it to the kill-ring."
+  (interactive)
+  (let ((buffer-title (org-get-buffer-title)))
+      (headline-title (get-current-headline-title)))
+  (org-kill-new (concat "[" 
+
+                      (if (string-equal buffer-title headline-title)
+                          buffer-title
+                          (concat buffer-title ":" headline-title))
+                      "]" 
+                      "(emacs://" (org-id-get nil 'create) ")"))
+
+  ;; https://systemcrafters.net/build-a-second-brain-in-emacs/5-org-roam-hacks/#streamlined-custom-capture-for-tasks-and-notes
+  (defun my/org-roam-capture-inbox ())
+  (interactive)
+  (org-roam-capture- :node (org-roam-node-create)
+                  :templates '(("t" "TODO" entry
+                                  "* PROCESS %? \n:LOGBOOK:\n- State \"PROCESS\"    from \"\"    %U \n:END:\n"
+                                  :target (file+head+olp "tasks.org" "#+title ${title}\n" ("Inbox"))
+                                  :prepend
+                                  :jump-to-captured t))
+                              ("p" "PROPOSE" entry
+                                  "* PROPOSE %^{title}\n:PROPERTIES:\n:link:     %^{link}\n:END:\n** Job Description\n%?\n** Proposal\n:properties:\n:end:\n"
+                                  :target (file+head+olp "proposals.org" "#+title ${title}\n" ("Proposals"))
+                                  :prepend
+                                  :jump-to-captured t))
+
+  (use-package emacsql-sqlite-builtin :ensure t)
+  (use-package org-roam
+    :pin melpa
+    :ensure t
+    :after org
+    :after (org emacsql-sqlite-builtin)
+    :bind (("C-c n l" . org-roam-buffer-toggle
+            ("C-c n f" . org-roam-node-find)
+            ("C-c n g" . org-roam-graph)
+            ("C-c n w" . org-roam-refile)
+            ("C-c n i" . org-roam-node-insert)
+            ("C-c n c" . org-capture)
+            ("C-c n j" . org-roam-dailies-capture-today)
+            ("C-c y"   . get-id-as-link)))
+    :config
+    (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
+    (org-roam-db-autosync-mode)
+    :custom
+    (org-roam-database-connector 'sqlite-builtin))
+
+  (defun gsgx/org-roam-create-note-from-headline ())
+  "Create an Org-roam note from the current headline if it doesn't
+  exist without jumping to it"
+  (let* ((title (nth 4 (org-heading-components))))
+      ;; TODO: How can I just use the title without user input?
+      (node (org-roam-node-read title)))
+  (if (org-roam-node-file node)
+      (message "Skipping %s, node already exists" title)
+      ;; Without this the subsequent kills seem to be grouped together, not
+      ;; sure why
+      (kill-new "")
+      (org-cut-subtree)
+      (org-roam-capture- :node node)
+      (org-paste-subtree)
+      (kill-whole-line)
+      (org-capture-finalize nil)
+      ;; `org-map-entries' call continue from the right place
+      (setq org-map-continue-from
+          (org-element-property :begin (org-element-at-point))))
+
+  (defun gsgx/org-roam-create-note-from-headlines ()
+    (interactive)
+    (if (region-active-p)
+        ;; `region-start-level' means we'll map over only headlines that are at
+        ;; the same level as the first headline in the region. This may or may not
+        ;; be what you want
+        (org-map-entries
+         'gsgx/org-roam-create-note-from-headline t 'region-start-level)
+      ;; If no region was selected, just create the note from the current headline
+      (gsgx/org-roam-create-note-from-headline)))
+#+end_src
 * Editing
 :PROPERTIES:
 :header-args: :noweb-ref emacs-ide
@@ -241,7 +336,6 @@ lsp-mode
 
 #+end_src
 ** Language Integrations 
-
 *** JavaScript/TypeScript
 #+begin_src elisp
   (crafted-package-install-package 'js2-mode)
@@ -833,101 +927,7 @@ And cmake appears to require make
       (cons (expand-file-name "info" user-emacs-directory)
           Info-default-directory-list)))
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Configure Org-roam ;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;
-
-  (defun org-get-buffer-title ()
-  (let* ((parsed (org-element-parse-buffer 'element))
-      (title (org-element-map parsed 'keyword
-              (lambda (k)
-                  (when (string-equal (org-element-property :key k) "TITLE")
-                  (org-element-property :value k))))))
-  (when title
-  (if (interactive-p)
-      (message (car title)))
-  (car title))))
-
-  (defun get-current-headline-title()
-  (or (org-entry-get nil "ITEM") (car (cdr (car (org-collect-keywords '("title")))))))
-
-  (defun get-id-as-link ()
-  "Retrieves the org-id of the current headline or note, formats it as a URI, and copies it to the kill-ring."
-  (interactive)
-  (let ((buffer-title (org-get-buffer-title))
-      (headline-title (get-current-headline-title)))
-  (org-kill-new (concat "[" 
-                      (if (string-equal buffer-title headline-title)
-                          buffer-title
-                          (concat buffer-title ":" headline-title))
-                      "]" 
-                      "(emacs://" (org-id-get nil 'create) ")"))))
-
-  ;; https://systemcrafters.net/build-a-second-brain-in-emacs/5-org-roam-hacks/#streamlined-custom-capture-for-tasks-and-notes
-  (defun my/org-roam-capture-inbox ()
-  (interactive)
-  (org-roam-capture- :node (org-roam-node-create)
-                  :templates '(("t" "TODO" entry
-                                  "* PROCESS %? \n:LOGBOOK:\n- State \"PROCESS\"    from \"\"    %U \n:END:\n"
-                                  :target (file+head+olp "tasks.org" "#+title ${title}\n" ("Inbox"))
-                                  :prepend
-                                  :jump-to-captured t)
-                              ("p" "PROPOSE" entry
-                                  "* PROPOSE %^{title}\n:PROPERTIES:\n:link:     %^{link}\n:END:\n** Job Description\n%?\n** Proposal\n:properties:\n:end:\n"
-                                  :target (file+head+olp "proposals.org" "#+title ${title}\n" ("Proposals"))
-                                  :prepend
-                                  :jump-to-captured t))))
-
-  (use-package emacsql-sqlite-builtin :ensure t)
-  (use-package org-roam
-  :pin melpa
-  :ensure t
-  :after org
-  :after (org emacsql-sqlite-builtin)
-  :bind (("C-c n l" . org-roam-buffer-toggle)
-          ("C-c n f" . org-roam-node-find)
-          ("C-c n g" . org-roam-graph)
-          ("C-c n w" . org-roam-refile)
-          ("C-c n i" . org-roam-node-insert)
-          ("C-c n c" . org-capture)
-          ("C-c n j" . org-roam-dailies-capture-today)
-          ("C-c y"   . get-id-as-link))
-  :config
-  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
-  (org-roam-db-autosync-mode)
-  :custom
-  (org-roam-database-connector 'sqlite-builtin))
-
-  (defun gsgx/org-roam-create-note-from-headline ()
-  "Create an Org-roam note from the current headline if it doesn't
-  exist without jumping to it"
-  (let* ((title (nth 4 (org-heading-components)))
-      ;; TODO: How can I just use the title without user input?
-      (node (org-roam-node-read title)))
-  (if (org-roam-node-file node)
-      (message "Skipping %s, node already exists" title)
-      ;; Without this the subsequent kills seem to be grouped together, not
-      ;; sure why
-      (kill-new "")
-      (org-cut-subtree)
-      (org-roam-capture- :node node)
-      (org-paste-subtree)
-      (kill-whole-line)
-      (org-capture-finalize nil)
-      ;; `org-map-entries' call continue from the right place
-      (setq org-map-continue-from
-          (org-element-property :begin (org-element-at-point))))))
-
-  (defun gsgx/org-roam-create-note-from-headlines ()
-    (interactive)
-    (if (region-active-p)
-        ;; `region-start-level' means we'll map over only headlines that are at
-        ;; the same level as the first headline in the region. This may or may not
-        ;; be what you want
-        (org-map-entries
-         'gsgx/org-roam-create-note-from-headline t 'region-start-level)
-      ;; If no region was selected, just create the note from the current headline
-      (gsgx/org-roam-create-note-from-headline)))
+  <<emacs-structured-notes>>
 
   <<emacs-ide>>
 
