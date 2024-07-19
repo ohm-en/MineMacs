@@ -205,6 +205,64 @@
       ;; If no region was selected, just create the note from the current headline
       (gsgx/org-roam-create-note-from-headline)))
 #+end_src
+
+*** Helper Functions
+#+begin_src elisp
+  (defun my/extract-org-id-from-link (link)
+    "Extract the ID from an org-mode link."
+    (when (string-match "\\[\\[id:\\(.*?\\)\\]\\[.*?\\]\\]" link)
+      (match-string 1 link)))
+
+  (defun my/org-roam-get-node-by-id (id)
+    "Get an org-roam node by its ID.
+  Return the node if it exists, otherwise return nil."
+    (let ((node (org-roam-node-from-id id)))
+      (if node
+          (progn
+            (message "Node Title: %s" (org-roam-node-title node))
+            node)
+        (progn
+          (message "Node not found")
+          nil))))
+
+  (defun my/org-roam-get-node-property (node property)
+    "Get a specific PROPERTY from an org-roam node by its ID.
+  Return the property value if it exists, otherwise return nil."
+          (let ((properties (org-roam-node-properties node)))
+            (cdr (assoc property properties))))
+
+  (defun my/org-roam-node-get-parent (node)
+    (let ((parent_link (my/org-roam-get-node-property node "PARENT")))
+      (if (stringp parent_link)
+          (my/org-roam-get-node-by-id (my/extract-org-id-from-link parent_link))
+        nil)))
+#+end_src
+
+*** User Functions
+#+begin_src elisp 
+  (defun my/org-roam-node-set-parent ()
+    "Find an org-roam node and add its ID as the parent_id to the current headline."
+    (interactive)
+    (let* ((node (org-roam-node-read))
+           (node-id (org-roam-node-id node))
+           (node-title (org-roam-node-title node))
+           (link (format "[[id:%s][%s]]" node-id node-title)))
+      (org-entry-put (point) "PARENT" link)))
+#+end_src
+
+*** Custom Configuration
+#+BEGIN_SRC elisp
+   (cl-defmethod org-roam-node-parent-child-title ((node org-roam-node))
+      "Get the title of the parent node or an empty string if no parent is found."
+      (or (when-let ((parent (my/org-roam-node-get-parent node)))
+            (concat (org-roam-node-title parent) ":" (org-roam-node-title node)))
+          (org-roam-node-title node)))
+
+  (setq org-roam-node-display-template
+        (concat "${parent-child-title:*}"
+                (propertize "${tags:10}" 'face 'org-tag)))
+#+END_SRC
+
 * Editing
 :PROPERTIES:
 :header-args: :noweb-ref emacs-ide
