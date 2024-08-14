@@ -141,26 +141,6 @@
                                   :prepend
                                   :jump-to-captured t))
 
-  (use-package emacsql-sqlite-builtin :ensure t)
-  (use-package org-roam
-    :pin melpa
-    :ensure t
-    :after org
-    :after (org emacsql-sqlite-builtin)
-    :bind (("C-c n l" . org-roam-buffer-toggle
-            ("C-c n f" . org-roam-node-find)
-            ("C-c n g" . org-roam-graph)
-            ("C-c n w" . org-roam-refile)
-            ("C-c n i" . org-roam-node-insert)
-            ("C-c n c" . org-capture)
-            ("C-c n j" . org-roam-dailies-capture-today)
-            ("C-c y"   . get-id-as-link)))
-    :config
-    (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
-    (org-roam-db-autosync-mode)
-    :custom
-    (org-roam-database-connector 'sqlite-builtin))
-
   (defun gsgx/org-roam-create-note-from-headline ())
   "Create an Org-roam note from the current headline if it doesn't
   exist without jumping to it"
@@ -271,6 +251,29 @@
       (org-entry-put (point) "PARENT" link)))
 #+end_src
 
+*** Package Definition
+#+begin_src elisp
+  (use-package emacsql-sqlite-builtin :ensure t)
+  (use-package org-roam
+    :pin melpa
+    :ensure t
+    :after org
+    :after (org emacsql-sqlite-builtin)
+    :bind (("C-c n l" . org-roam-buffer-toggle)
+            ("C-c n f" . org-roam-node-find)
+            ("C-c n g" . org-roam-graph)
+            ("C-c n w" . org-roam-refile)
+            ("C-c n i" . org-roam-node-insert)
+            ("C-c n c" . org-capture)
+            ("C-c n j" . org-roam-dailies-capture-today)
+            ("C-c y"   . get-id-as-link)
+            ("C-c n y" . my/org-roam-copy-node-as-markdown-link)))
+    :config
+    (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
+    (org-roam-db-autosync-mode)
+    :custom
+    (org-roam-database-connector 'sqlite-builtin))
+#+end_src
 
 *** Custom Configuration
 #+BEGIN_SRC elisp
