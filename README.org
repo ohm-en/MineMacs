@@ -249,6 +249,17 @@
    (let ((org-id (org-id-get nil 'create)))
      (org-kill-new (my/create-org-id-markdown-link org-id))))
 #+end_src
+
+#+begin_src elisp
+  (defun my/org-roam-copy-node-as-markdown-link ()
+       "Prompts the user to select a node which is copied to the kill ring as a customized link."
+       (interactive)
+       (let* ((node (org-roam-node-read))
+              (node-id (org-roam-node-id node))
+              (node-link (my/create-org-id-markdown-link node-id)))
+         (org-kill-new node-link)))
+#+end_src
+
 #+begin_src elisp 
   (defun my/org-roam-node-set-parent ()
     "Find an org-roam node and add its ID as the parent_id to the current headline."
@@ -259,6 +270,7 @@
            (link (format "[[id:%s][%s]]" node-id node-title)))
       (org-entry-put (point) "PARENT" link)))
 #+end_src
+
 
 *** Custom Configuration
 #+BEGIN_SRC elisp
