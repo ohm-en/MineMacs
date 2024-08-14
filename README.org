@@ -126,19 +126,6 @@
   (defun get-current-headline-title())
   (or (org-entry-get nil "ITEM") (car (cdr (car (org-collect-keywords '("title"))))))
 
-  (defun get-id-as-link ())
-  "Retrieves the org-id of the current headline or note, formats it as a URI, and copies it to the kill-ring."
-  (interactive)
-  (let ((buffer-title (org-get-buffer-title)))
-      (headline-title (get-current-headline-title)))
-  (org-kill-new (concat "[" 
-
-                      (if (string-equal buffer-title headline-title)
-                          buffer-title
-                          (concat buffer-title ":" headline-title))
-                      "]" 
-                      "(emacs://" (org-id-get nil 'create) ")"))
-
   ;; https://systemcrafters.net/build-a-second-brain-in-emacs/5-org-roam-hacks/#streamlined-custom-capture-for-tasks-and-notes
   (defun my/org-roam-capture-inbox ())
   (interactive)
@@ -238,7 +225,30 @@
         nil)))
 #+end_src
 
+#+begin_src elisp
+  (defun my/create-org-id-markdown-link (org-id)
+    (let ((roam-node (my/org-roam-get-node-by-id org-id)))
+      (if (and roam-node (not (equal roam-node nil)) (not (equal roam-node '())))
+          (let ((parent-roam-node (my/org-roam-node-get-parent roam-node)))
+            (concat "["
+                    (if parent-roam-node
+                        (concat (org-roam-node-title parent-roam-node) ":")
+                      "")
+                    (org-roam-node-title roam-node)
+                    "]"
+                    "(emacs://" org-id ")"))
+        nil)))
+#+end_src
+
 *** User Functions
+
+#+begin_src elisp
+  (defun get-id-as-link ()
+     "Retrieves the org-id of the current headline or note, formats it as a URI, and copies it to the kill-ring."
+   (interactive)
+   (let ((org-id (org-id-get nil 'create)))
+     (org-kill-new (my/create-org-id-markdown-link org-id))))
+#+end_src
 #+begin_src elisp 
   (defun my/org-roam-node-set-parent ()
     "Find an org-roam node and add its ID as the parent_id to the current headline."
