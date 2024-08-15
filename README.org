@@ -112,42 +112,42 @@
 ** Org-Roam
 
 #+begin_src elisp 
-  (defun org-get-buffer-title ())
-  (let* ((parsed (org-element-parse-buffer 'element)))
-      (title (org-element-map parsed 'keyword
-              (lambda (k)
-                  (when (string-equal (org-element-property :key k) "TITLE"))
-                  (org-element-property :value k)))))
-  (when title)
-  (if (interactive-p)
-      (message (car title)))
-  (car title)
+  (defun org-get-buffer-title ()
+     (let* ((parsed (org-element-parse-buffer 'element))
+          (title (org-element-map parsed 'keyword
+                    (lambda (k)
+                      (when (string-equal (org-element-property :key k) "TITLE")
+                        (org-element-property :value k))))))
+     (when title
+       (if (interactive-p)
+           (message (car title)))
+       (car title))))
 
-  (defun get-current-headline-title())
-  (or (org-entry-get nil "ITEM") (car (cdr (car (org-collect-keywords '("title"))))))
+  (defun get-current-headline-title()
+    (or (org-entry-get nil "ITEM") (car (cdr (car (org-collect-keywords '("title")))))))
 
   ;; https://systemcrafters.net/build-a-second-brain-in-emacs/5-org-roam-hacks/#streamlined-custom-capture-for-tasks-and-notes
-  (defun my/org-roam-capture-inbox ())
-  (interactive)
-  (org-roam-capture- :node (org-roam-node-create)
-                  :templates '(("t" "TODO" entry
-                                  "* PROCESS %? \n:LOGBOOK:\n- State \"PROCESS\"    from \"\"    %U \n:END:\n"
-                                  :target (file+head+olp "tasks.org" "#+title ${title}\n" ("Inbox"))
-                                  :prepend
-                                  :jump-to-captured t))
-                              ("p" "PROPOSE" entry
-                                  "* PROPOSE %^{title}\n:PROPERTIES:\n:link:     %^{link}\n:END:\n** Job Description\n%?\n** Proposal\n:properties:\n:end:\n"
-                                  :target (file+head+olp "proposals.org" "#+title ${title}\n" ("Proposals"))
-                                  :prepend
-                                  :jump-to-captured t))
+  (defun my/org-roam-capture-inbox ()
+     (interactive)
+   (org-roam-capture- :node (org-roam-node-create)
+                   :templates '(("t" "TODO" entry
+                                   "* PROCESS %? \n:LOGBOOK:\n- State \"PROCESS\"    from \"\"    %U \n:END:\n"
+                                   :target (file+head+olp "tasks.org" "#+title ${title}\n" ("Inbox"))
+                                   :prepend
+                                   :jump-to-captured t))
+                               ("p" "PROPOSE" entry
+                                   "* PROPOSE %^{title}\n:PROPERTIES:\n:link:     %^{link}\n:END:\n** Job Description\n%?\n** Proposal\n:properties:\n:end:\n"
+                                   :target (file+head+olp "proposals.org" "#+title ${title}\n" ("Proposals"))
+                                   :prepend
+                                   :jump-to-captured t)))
 
-  (defun gsgx/org-roam-create-note-from-headline ())
-  "Create an Org-roam note from the current headline if it doesn't
+  (defun gsgx/org-roam-create-note-from-headline ()
+    "Create an Org-roam note from the current headline if it doesn't
   exist without jumping to it"
-  (let* ((title (nth 4 (org-heading-components))))
+    (let* ((title (nth 4 (org-heading-components))))
       ;; TODO: How can I just use the title without user input?
       (node (org-roam-node-read title)))
-  (if (org-roam-node-file node)
+    (if (org-roam-node-file node)
       (message "Skipping %s, node already exists" title)
       ;; Without this the subsequent kills seem to be grouped together, not
       ;; sure why
@@ -159,7 +159,7 @@
       (org-capture-finalize nil)
       ;; `org-map-entries' call continue from the right place
       (setq org-map-continue-from
-          (org-element-property :begin (org-element-at-point))))
+          (org-element-property :begin (org-element-at-point)))))
 
   (defun gsgx/org-roam-create-note-from-headlines ()
     (interactive)
@@ -251,8 +251,8 @@
       (org-entry-put (point) "PARENT" link)))
 #+end_src
 
-*** Package Definition
-#+begin_src elisp
+*** Package Configuration
+#+BEGIN_SRC elisp
   (use-package emacsql-sqlite-builtin :ensure t)
   (use-package org-roam
     :pin melpa
@@ -260,32 +260,28 @@
     :after org
     :after (org emacsql-sqlite-builtin)
     :bind (("C-c n l" . org-roam-buffer-toggle)
-            ("C-c n f" . org-roam-node-find)
-            ("C-c n g" . org-roam-graph)
-            ("C-c n w" . org-roam-refile)
-            ("C-c n i" . org-roam-node-insert)
-            ("C-c n c" . org-capture)
-            ("C-c n j" . org-roam-dailies-capture-today)
-            ("C-c y"   . get-id-as-link)
-            ("C-c n y" . my/org-roam-copy-node-as-markdown-link)))
+           ("C-c n f" . org-roam-node-find)
+           ("C-c n g" . org-roam-graph)
+           ("C-c n w" . org-roam-refile)
+           ("C-c n i" . org-roam-node-insert)
+           ("C-c n c" . org-capture)
+           ("C-c n j" . org-roam-dailies-capture-today)
+           ("C-c y"   . get-id-as-link)
+           ("C-c n y" . my/org-roam-copy-node-as-markdown-link))
     :config
     (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
     (org-roam-db-autosync-mode)
     :custom
-    (org-roam-database-connector 'sqlite-builtin))
-#+end_src
-
-*** Custom Configuration
-#+BEGIN_SRC elisp
-   (cl-defmethod org-roam-node-parent-child-title ((node org-roam-node))
+    (org-roam-database-connector 'sqlite-builtin)
+    (cl-defmethod org-roam-node-parent-child-title ((node org-roam-node))
       "Get the title of the parent node or an empty string if no parent is found."
       (or (when-let ((parent (my/org-roam-node-get-parent node)))
             (concat (org-roam-node-title parent) ":" (org-roam-node-title node)))
           (org-roam-node-title node)))
 
-  (setq org-roam-node-display-template
+    (setq org-roam-node-display-template
         (concat "${parent-child-title:*}"
-                (propertize "${tags:10}" 'face 'org-tag)))
+                (propertize "${tags:10}" 'face 'org-tag))))
 #+END_SRC
 
 * Editing
@@ -301,94 +297,93 @@
 #+RESULTS:
 
 #+begin_src elisp
+  (crafted-package-install-package 'helm)
 
-(crafted-package-install-package 'helm)
+  (use-package helm
+     :ensure t
+     :init
+     (setq helm-M-x-fuzzy-match t
+       helm-mode-fuzzy-match t
+       helm-buffers-fuzzy-matching t
+       helm-recentf-fuzzy-match t
+       helm-split-window-in-side-p t)
 
-(use-package helm
-:ensure t
-:init
-(setq helm-M-x-fuzzy-match t
-    helm-mode-fuzzy-match t
-    helm-buffers-fuzzy-matching t
-    helm-recentf-fuzzy-match t
-    helm-split-window-in-side-p t)
+     :bind (("M-x" . helm-M-x)
+            ("C-x r b" . helm-filtered-bookmarks)
+            ("C-x C-f" . helm-find-files)
+            ("C-x b" . helm-buffers-list)
+     :map helm-map
+            ([escape] . helm-keyboard-quit))
+     :config
+   (helm-mode 1))
 
-:bind (("M-x" . helm-M-x)
-    ("C-x r b" . helm-filtered-bookmarks)
-    ("C-x C-f" . helm-find-files)
-    ("C-x b" . helm-buffers-list)
-    :map helm-map
-    ([escape] . helm-keyboard-quit))
-:config
-(helm-mode 1))
+  (crafted-package-install-package 'lsp-mode)
+  (crafted-package-install-package 'lsp-ui)
+  (crafted-package-install-package 'dap-mode)
+  (use-package dap-mode
+  ;; Uncomment the config below if you want all UI panes to be hidden by default!
+  ;; :custom
+  ;; (lsp-enable-dap-auto-configure nil)
+  ;; :config
+  ;; (dap-ui-mode 1)
+   :config
+   (require 'dap-node)
+   (dap-node-setup)) ;; Automatically installs Node debug adapter if needed
 
-(crafted-package-install-package 'lsp-mode)
-(crafted-package-install-package 'lsp-ui)
-(crafted-package-install-package 'dap-mode)
-(use-package dap-mode
-;; Uncomment the config below if you want all UI panes to be hidden by default!
-;; :custom
-;; (lsp-enable-dap-auto-configure nil)
-;; :config
-;; (dap-ui-mode 1)
-:config
-(require 'dap-node)
-(dap-node-setup)) ;; Automatically installs Node debug adapter if needed
-
-(use-package 
-lsp-mode
-:hook ((js2-mode typescript-mode) . lsp)
-:commands lsp)
+  (use-package 
+   lsp-mode
+   :hook ((js2-mode typescript-mode) . lsp)
+   :commands lsp)
 
 
-(dw/leader-key-def
-"l"  '(:which-key "lsp")
-"ld" 'xref-find-definitions
-"lr" 'xref-find-references
-"lvr" 'lsp-rename
-"lir" 'lsp-ui-peek-find-references
-"ln" 'lsp-ui-find-next-reference
-"lp" 'lsp-ui-find-prev-reference
-"ls" 'counsel-imenu
-"le" 'lsp-ui-flycheck-list
-"lS" 'lsp-ui-sideline-mode
-"lx" 'lsp-extend-selection
-"lX" 'lsp-execute-code-action)
+  (dw/leader-key-def
+   "l"  '(:which-key "lsp")
+   "ld" 'xref-find-definitions
+   "lr" 'xref-find-references
+   "lvr" 'lsp-rename
+   "lir" 'lsp-ui-peek-find-references
+   "ln" 'lsp-ui-find-next-reference
+   "lp" 'lsp-ui-find-prev-reference
+   "ls" 'counsel-imenu
+   "le" 'lsp-ui-flycheck-list
+   "lS" 'lsp-ui-sideline-mode
+   "lx" 'lsp-extend-selection
+   "lX" 'lsp-execute-code-action)
 
-(use-package lsp-ui
-:ensure t
-:commands lsp-ui-mode
-:hook (lsp-mode . lsp-ui-mode)
-:config
-(setq lsp-ui-sideline-enable t)
-(setq lsp-ui-sideline-show-hover nil)
-(setq lsp-ui-doc-position 'bottom)
-(lsp-ui-doc-show))
+  (use-package lsp-ui
+   :ensure t
+   :commands lsp-ui-mode
+   :hook (lsp-mode . lsp-ui-mode)
+   :config
+   (setq lsp-ui-sideline-enable t)
+   (setq lsp-ui-sideline-show-hover nil)
+   (setq lsp-ui-doc-position 'bottom)
+   (lsp-ui-doc-show))
 
-(use-package helm-lsp :ensure t :commands helm-lsp-workspace-symbol)
+  (use-package helm-lsp :ensure t :commands helm-lsp-workspace-symbol)
 
-(use-package lsp-treemacs :ensure t :commands lsp-treemacs-errors-list)
+  (use-package lsp-treemacs :ensure t :commands lsp-treemacs-errors-list)
 
-(use-package dap-node)
+  (use-package dap-node)
 
-(crafted-package-install-package 'which-key)
+  (crafted-package-install-package 'which-key)
 
-(use-package which-key
-:config
-(which-key-mode))
+  (use-package which-key
+   :config
+   (which-key-mode))
 
-(use-package company
-:ensure t
-:config
-(setq company-idle-delay 0)
-(global-company-mode 1))
+  (use-package company
+   :ensure t
+   :config
+   (setq company-idle-delay 0)
+   (global-company-mode 1))
 
-(use-package flycheck
-:ensure t
-:init (global-flycheck-mode)
-:hook (lsp-mode . flycheck-mode)
-:config
-(setq flycheck-check-syntax-automatically '(mode-enabled save)))
+  (use-package flycheck
+   :ensure t
+   :init (global-flycheck-mode)
+   :hook (lsp-mode . flycheck-mode)
+   :config
+   (setq flycheck-check-syntax-automatically '(mode-enabled save)))
 
 
 #+end_src
@@ -479,170 +474,170 @@ lsp-mode
 add package runtfmt
 
 #+begin_src elisp
-(use-package rust-mode
-:ensure t
-:mode "\\.rs\\'"
-:config
-(setq rust-format-on-save t)
-(add-hook 'rust-mode-hook #'lsp))
+  (use-package rust-mode
+     :ensure t
+     :mode "\\.rs\\'"
+     :config
+     (setq rust-format-on-save t)
+     (add-hook 'rust-mode-hook #'lsp))
 #+end_src
 
 *** Dockerfile
 #+begin_src elisp 
-(use-package dockerfile-mode
-:ensure t
-:mode (("Dockerfile\\'" . dockerfile-mode)))
+  (use-package dockerfile-mode
+     :ensure t
+     :mode (("Dockerfile\\'" . dockerfile-mode)))
 #+end_src
 *** Markdown
 #+begin_src elisp
-(use-package markdown-mode
-:ensure t
-:mode (("README\\.md\\'" . gfm-mode)
-    ("\\.md\\'" . markdown-mode)
-    ("\\.markdown\\'" . markdown-mode))
-:init (setq markdown-command "pandoc"))
+  (use-package markdown-mode
+     :ensure t
+     :mode (("README\\.md\\'" . gfm-mode)
+            ("\\.md\\'" . markdown-mode)
+            ("\\.markdown\\'" . markdown-mode))
+     :init (setq markdown-command "pandoc"))
 #+end_src
 *** Org-mode
 
 #+begin_src elisp
-(defun dw/org-mode-setup ()
-(org-indent-mode)
-;;(variable-pitch-mode 1)
-;;(auto-fill-mode 0)                                                         
-(visual-line-mode 1)
-(setq evil-auto-indent t))
+  (defun dw/org-mode-setup ()
+     (org-indent-mode)
+  ;;(variable-pitch-mode 1)
+  ;;(auto-fill-mode 0)                                                         
+   (visual-line-mode 1)
+   (setq evil-auto-indent t))
 
-(use-package org
-:config
-(dw/leader-key-def
-"c"  '(:which-key "Copy")
-"cl"  'org-store-link))
+  (use-package org
+   :config
+   (dw/leader-key-def
+    "c"  '(:which-key "Copy")
+    "cl"  'org-store-link))
 
-(use-package org-mode
-:hook (org-mode . dw/org-mode-setup)
-:config
-(setq org-log-into-drawer t)
-(setq org-agenda-files
-    (seq-filter (lambda (file)
-                (not (string-match-p "/\\.#" file)))
-                (directory-files-recursively "~/Knowledgebase/" "\\.org$")))
-)
-
-(crafted-package-install-package 'toc-org)
-
-(use-package toc-org
-:hook (org-mode . toc-org-mode))
+  (use-package org-mode
+   :hook (org-mode . dw/org-mode-setup)
+   :config
+   (setq org-log-into-drawer t)
+   (setq org-agenda-files
+       (seq-filter (lambda (file)
+                    (not (string-match-p "/\\.#" file)))
+                   (directory-files-recursively "~/Knowledgebase/" "\\.org$"))))
 
 
-(use-package doct 
-:ensure t
-:commands (doct)
-:config 
-    (setq org-capture-templates
-        (doct '(("File" :keys "t" 
-                :file "~/Knowledgebase/Org/tasks.org"
-                :headline "Inbox"
-                :prepend t
-                :template ("* PROCESS  %?"
-                            ":LOGBOOK:"
-                            "- State \"PROCESS\"    from \"\"    %U"
-                            ":END:"))
-                ("Proposal" :keys "p"
-                :file "~/Knowledgebase/Org/proposals.org"
-                :headline "Proposals"
-                :prepend t
-                :jump-to-captured t
-                :template ("* PROPOSE %^{TITLE}%^{link}p"
-                            "** Job Description"
-                            "%?"
-                            "** Proposal"))
-                ("Work Order" :keys "o"
-                :file "~/Knowledgebase/Org/20230126110626-work_orders.org"
-                :headline "Orders"
-                :jump-to-captured t
-                :template ("* WO %^{IS}p%^{REQ}p %?"
-                            ":LOGBOOK:"
-                            "- State \"WO\"    from \"\"    %U"
-                            ":END:"
-                            "** Pre"
-                            "** Work"
-                            "** Post"))
-                ("Code Snippet with Source Block"
-                :keys "c"
-                :file "~/Knowledgebase/20231103090147-code_snippets.org" ; Replace with the path to your file
-                :headline "Inbox"
-                :template ("* %?\n#+BEGIN_SRC %^{Language|python|emacs-lisp|javascript|...}\n%i\n#+END_SRC\n")
-                :prepare-finalize (lambda ()
-                                    (when (region-active-p)
-                                    (let ((selected-text (buffer-substring-no-properties (region-beginning) (region-end))))
-                                        (deactivate-mark)
-                                        (insert (format "#+BEGIN_SRC %s\n%s\n#+END_SRC\n"
-                                                        (symbol-name major-mode)
-                                                        selected-text))))))))))
+  (crafted-package-install-package 'toc-org)
 
-;; Until the above works again
-(setq org-capture-templates
-'(("t" "Task" entry (file "~/Knowledgebase/Org/tasks.org")
-    "* PROCESS %?\n:LOGBOOK:\n- State \"PROCESS\"    from \"\"    %U\n:END:"
-    :prepend t
-    :headline "Inbox")
-
-    ("p" "Proposal" entry (file "~/Knowledgebase/Org/proposals.org")
-    "* PROPOSE %^{TITLE}\n%^{link}\n** Job Description\n%?\n** Proposal"
-    :prepend t
-    :jump-to-captured t
-    :headline "Proposals")
-
-    ("o" "Work Order" entry (file "~/Knowledgebase/Org/20230126110626-work_orders.org")
-    "* WO %^{IS}p%^{REQ}p %?\n:LOGBOOK:\n- State \"WO\"    from \"\"    %U\n:END:\n** Pre\n** Work\n** Post"
-    :jump-to-captured t
-    :headline "Orders")
-
-    ("c" "Code Snippet with Source Block" entry (file "~/Knowledgebase/20231103090147-code_snippets.org")
-    "* %?\n#+BEGIN_SRC %^{Language|python|emacs-lisp|java|...}\n%i\n#+END_SRC\n%a"
-    :prepend t
-    :headline "Inbox")))
-
-(setq org-agenda-custom-commands
-'(("w" "Work"
-    ((tags-todo "work")))))
+  (use-package toc-org
+   :hook (org-mode . toc-org-mode))
 
 
-(setq org-agenda-custom-commands
-'(("w" "Weekly Work Schedule"
-    agenda ""
-    ((org-agenda-span 'week)
-    (org-agenda-start-on-weekday 0) ;; Start on Sunday
-    (org-agenda-skip-function
-        '(org-agenda-skip-entry-if 'notregexp "^\\*+.*:work:"))
-    (org-agenda-skip-function
-        '(org-agenda-skip-entry-if 'notdeadline 'notscheduled))
-    ))))
+  (use-package doct 
+   :ensure t
+   :commands (doct)
+   :config 
+      (setq org-capture-templates
+          (doct '(("File" :keys "t" 
+                   :file "~/Knowledgebase/Org/tasks.org"
+                   :headline "Inbox"
+                   :prepend t
+                   :template ("* PROCESS  %?"
+                               ":LOGBOOK:"
+                               "- State \"PROCESS\"    from \"\"    %U"
+                               ":END:"))
+                  ("Proposal" :keys "p"
+                   :file "~/Knowledgebase/Org/proposals.org"
+                   :headline "Proposals"
+                   :prepend t
+                   :jump-to-captured t
+                   :template ("* PROPOSE %^{TITLE}%^{link}p"
+                               "** Job Description"
+                               "%?"
+                               "** Proposal"))
+                  ("Work Order" :keys "o"
+                   :file "~/Knowledgebase/Org/20230126110626-work_orders.org"
+                   :headline "Orders"
+                   :jump-to-captured t
+                   :template ("* WO %^{IS}p%^{REQ}p %?"
+                               ":LOGBOOK:"
+                               "- State \"WO\"    from \"\"    %U"
+                               ":END:"
+                               "** Pre"
+                               "** Work"
+                               "** Post"))
+                  ("Code Snippet with Source Block"
+                   :keys "c"
+                   :file "~/Knowledgebase/20231103090147-code_snippets.org" ; Replace with the path to your file
+                   :headline "Inbox"
+                   :template ("* %?\n#+BEGIN_SRC %^{Language|python|emacs-lisp|javascript|...}\n%i\n#+END_SRC\n")
+                   :prepare-finalize (lambda ()
+                                       (when (region-active-p)
+                                        (let ((selected-text (buffer-substring-no-properties (region-beginning) (region-end))))
+                                            (deactivate-mark)
+                                            (insert (format "#+BEGIN_SRC %s\n%s\n#+END_SRC\n"
+                                                            (symbol-name major-mode)
+                                                            selected-text))))))))))
+
+  ;; Until the above works again
+  (setq org-capture-templates
+   '(("t" "Task" entry (file "~/Knowledgebase/Org/tasks.org")
+       "* PROCESS %?\n:LOGBOOK:\n- State \"PROCESS\"    from \"\"    %U\n:END:"
+       :prepend t
+       :headline "Inbox")
+
+     ("p" "Proposal" entry (file "~/Knowledgebase/Org/proposals.org")
+      "* PROPOSE %^{TITLE}\n%^{link}\n** Job Description\n%?\n** Proposal"
+      :prepend t
+      :jump-to-captured t
+      :headline "Proposals")
+
+     ("o" "Work Order" entry (file "~/Knowledgebase/Org/20230126110626-work_orders.org")
+      "* WO %^{IS}p%^{REQ}p %?\n:LOGBOOK:\n- State \"WO\"    from \"\"    %U\n:END:\n** Pre\n** Work\n** Post"
+      :jump-to-captured t
+      :headline "Orders")
+
+     ("c" "Code Snippet with Source Block" entry (file "~/Knowledgebase/20231103090147-code_snippets.org")
+      "* %?\n#+BEGIN_SRC %^{Language|python|emacs-lisp|java|...}\n%i\n#+END_SRC\n%a"
+      :prepend t
+      :headline "Inbox")))
+
+  (setq org-agenda-custom-commands
+   '(("w" "Work"
+       ((tags-todo "work")))))
+
+
+  (setq org-agenda-custom-commands
+   '(("w" "Weekly Work Schedule"
+       agenda ""
+       ((org-agenda-span 'week)
+        (org-agenda-start-on-weekday 0) ;; Start on Sunday
+        (org-agenda-skip-function
+            '(org-agenda-skip-entry-if 'notregexp "^\\*+.*:work:"))
+        (org-agenda-skip-function
+            '(org-agenda-skip-entry-if 'notdeadline 'notscheduled))))))
+    
 #+end_src
 
 #+RESULTS:
 
 #+begin_src elisp
   (use-package org-edna
-  :ensure t
-  :hook
-  (org-mode . org-edna-mode)
-  :config
-  (setq org-edna-use-inheritance t)
-  (org-edna-load)
-  ;; define a function to process the current Org entry for Edna properties
-  (defun my/org-process-edna (&rest args)
-  "Process the current Org entry for Edna properties."
-  (when (org-entry-get nil "TRIGGER")
-  (org-edna-process-current-entry)))
-  ;; add the function to the org-trigger-hook and org-after-todo-state-change-hook
-  (add-hook 'org-trigger-hook #'my/org-process-edna)
-  (add-hook 'org-after-todo-state-change-hook #'my/org-process-edna))
+     :ensure t
+     :hook
+     (org-mode . org-edna-mode)
+     :config
+     (setq org-edna-use-inheritance t)
+     (org-edna-load)
+     ;; define a function to process the current Org entry for Edna properties
+     (defun my/org-process-edna (&rest args)
+         "Process the current Org entry for Edna properties."
+      (when (org-entry-get nil "TRIGGER")
+       (org-edna-process-current-entry)))
+     ;; add the function to the org-trigger-hook and org-after-todo-state-change-hook
+     (add-hook 'org-trigger-hook #'my/org-process-edna)
+     (add-hook 'org-after-todo-state-change-hook #'my/org-process-edna))
 #+end_src
 *** JSON
 #+begin_src elisp
-(use-package json-mode
-:ensure t)
+  (use-package json-mode
+     :ensure t)
 #+end_src
 *** YAML
 #+begin_src elisp
@@ -651,55 +646,42 @@ add package runtfmt
   (use-package yaml-mode
     :ensure t
     :mode "\\.yml\\'")
-
 #+end_src
 ** Automatic Formatting
 #+begin_src elisp
   (crafted-package-install-package 'apheleia)
   (use-package apheleia
-    :hook (after-init . apheleia-global-mode)
+    :ensure t
     :config
-      (setf (alist-get 'prettier apheleia-formatters)
-      '("prettier" "--stdin" "--stdin-filepath" (eval buffer-file-name)))
-      (setf (alist-get 'web-mode apheleia-mode-alist) 'prettier)
-      (setf (alist-get 'typescript-mode apheleia-mode-alist) 'prettier)
-      (setf (alist-get 'js-mode apheleia-mode-alist) 'prettier)
-      (setf (alist-get 'js2-mode apheleia-mode-alist) 'prettier)
-  )
+    (setf (alist-get 'prettier apheleia-formatters)
+          `("prettier" "--stdin" "--stdin-filepath" ,(lambda () buffer-file-name)))
+    (setf (alist-get 'web-mode apheleia-mode-alist) 'prettier)
+    (setf (alist-get 'typescript-mode apheleia-mode-alist) 'prettier)
+    (setf (alist-get 'js-mode apheleia-mode-alist) 'prettier)
+    (setf (alist-get 'js2-mode apheleia-mode-alist) 'prettier))
 #+end_src
 
 ** Helpful Minor Modes
 *** Prog-mode
 #+begin_src elisp
-(use-package hideshow
-:ensure t
-:hook (prog-mode . hs-minor-mode))
+  (use-package hideshow
+     :ensure t
+     :hook (prog-mode . hs-minor-mode))
 #+end_src
 
-*** Treesitter
+*** COMMENT Treesitter
 #+begin_src elisp
-  ;; (use-package tree-sitter
+  ;;   (use-package tree-sitter
   ;;     :ensure t
   ;;     :config
-  ;;     (global-tree-sitter-mode)
-  ;;     ;; you can easily see the difference tree-sitter-hl-mode makes for python, ts or tsx
-  ;;     ;; by switching on and off
-  ;;     (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
-
-  ;; (use-package tree-sitter-langs
+  ;;     (global-tree-sitter-mode) ; Enable tree-sitter globally
+  ;;     ;; Enable highlighting if tree-sitter is active
+  ;;     (add-hook 'tree-sitter-mode-hook #'tree-sitter-hl-mode))
+  ;;
+  ;;   (use-package tree-sitter-langs
   ;;     :ensure t
   ;;     :after tree-sitter)
-
-  (use-package tree-sitter
-  :ensure t
-  :after lsp-mode
-  :config
-  (use-package tree-sitter-langs
-  :ensure t))
 #+end_src
-
-#+RESULTS:
-: t
 
 *** LISP Navigation
 #+begin_src elisp
@@ -770,35 +752,35 @@ add package runtfmt
 #+end_src
 
 #+begin_src elisp
-(org-link-set-parameters "notmuch"
-    :follow 'org-notmuch-open
-    :store 'org-notmuch-store-link)
+  (org-link-set-parameters "notmuch"
+      :follow 'org-notmuch-open
+      :store 'org-notmuch-store-link)
 
-(defun org-notmuch-open (id)
-"Visit the notmuch message or thread with id ID."
-(notmuch-show id))
+  (defun org-notmuch-open (id)
+   "Visit the notmuch message or thread with id ID."
+   (notmuch-show id))
 
-(defun org-notmuch-store-link ()
-"Store a link to a notmuch mail message."
-(cl-case major-mode
-('notmuch-show-mode
-;; Store link to the current message
-(let* ((id (notmuch-show-get-message-id))
-(link (concat "notmuch:" id))
-(description (format "Mail: %s" (notmuch-show-get-subject))))
-    (org-store-link-props
-:type "notmuch"
-:link link
-:description description)))
-('notmuch-search-mode
-;; Store link to the thread on the current line
-(let* ((id (notmuch-search-find-thread-id))
-(link (concat "notmuch:" id))
-(description (format "Mail: %s" (notmuch-search-find-subject))))
-    (org-store-link-props
-:type "notmuch"
-:link link
-:description description)))))
+  (defun org-notmuch-store-link ()
+     "Store a link to a notmuch mail message."
+     (cl-case major-mode
+         ('notmuch-show-mode
+          ;; Store link to the current message
+          (let* ((id (notmuch-show-get-message-id))
+                 (link (concat "notmuch:" id))
+                 (description (format "Mail: %s" (notmuch-show-get-subject))))
+              (org-store-link-props
+               :type "notmuch"
+               :link link
+               :description description)))
+         ('notmuch-search-mode
+       ;; Store link to the thread on the current line
+       (let* ((id (notmuch-search-find-thread-id))
+              (link (concat "notmuch:" id))
+              (description (format "Mail: %s" (notmuch-search-find-subject))))
+           (org-store-link-props
+            :type "notmuch"
+            :link link
+            :description description)))))
 #+end_src
 ** Elfeed
 #+begin_src elisp
@@ -970,10 +952,10 @@ And cmake appears to require make
   (add-hook 'emacs-startup-hook
       (lambda ()
           (custom-set-faces
-          `(default ((t (:font "JetBrainsMono Nerd Font"))))
-          `(fixed-pitch ((t (:inherit (default)))))
-          `(fixed-pitch-serif ((t (:inherit (default)))))
-                                                  `(variable-pitch ((t (:font "Fira Sans")))))))
+           `(default ((t (:font "JetBrainsMono Nerd Font"))))
+           `(fixed-pitch ((t (:inherit (default)))))
+           `(fixed-pitch-serif ((t (:inherit (default)))))
+            `(variable-pitch ((t (:font "Fira Sans")))))))
 
   <<emacs-hotkeys>>
 
@@ -987,10 +969,10 @@ And cmake appears to require make
   ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (use-package ispell
-  :init
-  (setq ispell-dictionary "en_US")
-  (setq ispell-program-name "aspell")
-  (setq ispell-silently-savep t))
+   :init
+   (setq ispell-dictionary "en_US")
+   (setq ispell-program-name "aspell")
+   (setq ispell-silently-savep t))
 
   (crafted-package-install-package 'flymake-aspell)
   (use-package flymake-aspell
@@ -1007,12 +989,12 @@ And cmake appears to require make
   (crafted-package-install-package 'hyperbole)
 
   (use-package hyperbole
-  :ensure t
-  :config
-  ;; Set the location of the Hyperbole Info files
-  (setq Info-default-directory-list
-      (cons (expand-file-name "info" user-emacs-directory)
-          Info-default-directory-list)))
+     :ensure t
+     :config
+     ;; Set the location of the Hyperbole Info files
+     (setq Info-default-directory-list
+           (cons (expand-file-name "info" user-emacs-directory)
+                  Info-default-directory-list)))
 
   <<emacs-structured-notes>>
 
@@ -1027,13 +1009,13 @@ And cmake appears to require make
   ;;;;;;;;;;;;;;;
 
   (defun send-to-eshell-remote (command)
-  (let ((buf (get-buffer-create "eshell-remote")))
-  (with-current-buffer buf
-  (unless (eq major-mode 'eshell-mode)
-  (eshell-mode))
-  (goto-char (point-max))
-  (insert command)
-  (eshell-send-input))))
+   (let ((buf (get-buffer-create "eshell-remote")))
+    (with-current-buffer buf
+     (unless (eq major-mode 'eshell-mode)
+      (eshell-mode))
+     (goto-char (point-max))
+     (insert command)
+     (eshell-send-input))))
 
 
   ;; Babel
@@ -1051,12 +1033,12 @@ And cmake appears to require make
   ;; ;; Project Based Environment Variables ;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   (use-package envrc
-  :ensure t
+   :ensure t
   ;;:after (flycheck) ; or other minor modes you want to load before envrc
-  :config
-  (envrc-global-mode)
+   :config
+   (envrc-global-mode))
   ;;(with-eval-after-load 'envrc
   ;;  (define-key envrc-mode-map (kbd "C-c e") 'envrc-command-map))
-  )
+
 #+end_src
 
