@@ -205,19 +205,26 @@
         nil)))
 #+end_src
 
+#+begin_src elisp 
+  (defun my/format-org-id-markdown-link (node-id node-title parent-node-title)
+    (concat "["
+            (if parent-node-title
+                (concat parent-node-title ":")
+              "")
+            node-title "]" "(emacs://" org-id ")"))
+#+end_src
+
 #+begin_src elisp
   (defun my/create-org-id-markdown-link (org-id)
     (let ((roam-node (my/org-roam-get-node-by-id org-id)))
-      (if (and roam-node (not (equal roam-node nil)) (not (equal roam-node '())))
+      (if roam-node
           (let ((parent-roam-node (my/org-roam-node-get-parent roam-node)))
-            (concat "["
-                    (if parent-roam-node
-                        (concat (org-roam-node-title parent-roam-node) ":")
-                      "")
-                    (org-roam-node-title roam-node)
-                    "]"
-                    "(emacs://" org-id ")"))
-        nil)))
+            (my/format-org-id-markdown-link
+             org-id
+             (org-roam-node-title roam-node)
+             (when parent-roam-node (org-roam-node-title parent-roam-node))))
+        (let ((headline-title (get-current-headline-title)))
+          (my/format-org-id-markdown-link org-id headline-title nil)))))
 #+end_src
 
 *** User Functions
