@@ -10,21 +10,19 @@
 * The Basics
 ** Leader Key
 #+begin_src elisp :noweb-ref emacs-hotkeys
-(crafted-package-install-package 'general)
-(use-package general
-:config
-(general-evil-setup t)
-
-(general-create-definer dw/leader-key-def
-:keymaps '(normal insert visual emacs)
-:prefix "SPC"
-:global-prefix "C-SPC")
-
-(general-create-definer dw/ctrl-c-keys
-:prefix "C-c"))
-
-(global-set-key (kbd "C-x b") 'consult-buffer)
+  (crafted-package-install-package 'general)
+  (use-package general
+    :config
+    (general-evil-setup t)
+    (general-create-definer dw/leader-key-def
+      :keymaps '(normal insert visual emacs)
+      :prefix "SPC"
+      :global-prefix "C-SPC")
+    (general-create-definer dw/ctrl-c-keys
+      :prefix "C-c")
+    (global-set-key (kbd "C-x b") 'consult-buffer))
 #+end_src
+
 ** Theme
 #+begin_src elisp :noweb-ref emacs-theme
   (crafted-package-install-package 'modus-themes)
