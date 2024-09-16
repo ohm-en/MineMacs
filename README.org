@@ -172,7 +172,7 @@
 #+end_src
 
 *** Helper Functions
-#+begin_src elisp
+#+begin_src elisp :noweb-ref org-roam-config
   (defun my/extract-org-id-from-link (link)
     "Extract the ID from an org-mode link."
     (when (string-match "\\[\\[id:\\(.*?\\)\\]\\[.*?\\]\\]" link)
@@ -201,18 +201,14 @@
       (if (stringp parent_link)
           (my/org-roam-get-node-by-id (my/extract-org-id-from-link parent_link))
         nil)))
-#+end_src
 
-#+begin_src elisp 
   (defun my/format-org-id-markdown-link (node-id node-title parent-node-title)
     (concat "["
             (if parent-node-title
                 (concat parent-node-title ":")
               "")
             node-title "]" "(emacs://" org-id ")"))
-#+end_src
 
-#+begin_src elisp
   (defun my/create-org-id-markdown-link (org-id)
     (let ((roam-node (my/org-roam-get-node-by-id org-id)))
       (if roam-node
@@ -227,15 +223,13 @@
 
 *** User Functions
 
-#+begin_src elisp
+#+begin_src elisp :noweb-ref org-roam-config
   (defun get-id-as-link ()
      "Retrieves the org-id of the current headline or note, formats it as a URI, and copies it to the kill-ring."
    (interactive)
    (let ((org-id (org-id-get nil 'create)))
      (org-kill-new (my/create-org-id-markdown-link org-id))))
-#+end_src
 
-#+begin_src elisp
   (defun my/org-roam-copy-node-as-markdown-link ()
        "Prompts the user to select a node which is copied to the kill ring as a customized link."
        (interactive)
@@ -243,9 +237,7 @@
               (node-id (org-roam-node-id node))
               (node-link (my/create-org-id-markdown-link node-id)))
          (org-kill-new node-link)))
-#+end_src
 
-#+begin_src elisp 
   (defun my/org-roam-node-set-parent ()
     "Find an org-roam node and add its ID as the parent_id to the current headline."
     (interactive)
@@ -257,7 +249,7 @@
 #+end_src
 
 *** Package Configuration
-#+BEGIN_SRC elisp
+#+BEGIN_SRC elisp :noweb yes
   (use-package emacsql-sqlite-builtin :ensure t)
   (use-package org-roam
     :pin melpa
@@ -276,6 +268,7 @@
     :config
     (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
     (org-roam-db-autosync-mode)
+    <<org-roam-config>>
     :custom
     (org-roam-database-connector 'sqlite-builtin)
     (cl-defmethod org-roam-node-parent-child-title ((node org-roam-node))
