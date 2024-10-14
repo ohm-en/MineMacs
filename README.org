@@ -266,11 +266,7 @@
            ("C-c y"   . get-id-as-link)
            ("C-c n y" . my/org-roam-copy-node-as-markdown-link))
     :config
-    (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
     (org-roam-db-autosync-mode)
-    <<org-roam-config>>
-    :custom
-    (org-roam-database-connector 'sqlite-builtin)
     (cl-defmethod org-roam-node-parent-child-title ((node org-roam-node))
       "Get the title of the parent node or an empty string if no parent is found."
       (or (when-let ((parent (my/org-roam-node-get-parent node)))
@@ -279,7 +275,10 @@
 
     (setq org-roam-node-display-template
         (concat "${parent-child-title:*}"
-                (propertize "${tags:10}" 'face 'org-tag))))
+                (propertize "${tags:10}" 'face 'org-tag)))
+    <<org-roam-config>>
+    :custom
+    (org-roam-database-connector 'sqlite-builtin))
 #+END_SRC
 
 * Editing
