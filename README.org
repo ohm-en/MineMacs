@@ -651,6 +651,15 @@ add package runtfmt
     :ensure t
     :mode "\\.yml\\'")
 #+end_src
+*** Common Lisp
+#+begin_src elisp
+  (use-package slime
+    :ensure t
+    :defer t
+    :config
+    (setq inferior-lisp-program "sbcl")) 
+#+end_src
+
 ** Automatic Formatting
 #+begin_src elisp
   (crafted-package-install-package 'apheleia)
