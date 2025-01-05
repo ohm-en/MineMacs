@@ -103,7 +103,7 @@
       "pA" '(projectile-add-known-project :which-key "add known project")
       "pl" '(projectile-list-projects :which-key "list projects"))
 #+end_src
-* Notetaking
+* Org-mode
 :PROPERTIES:
 :header-args: :noweb-ref emacs-structured-notes 
 :END:
@@ -172,6 +172,7 @@
 #+end_src
 
 *** Helper Functions
+
 #+begin_src elisp :noweb-ref org-roam-config
   (defun my/extract-org-id-from-link (link)
     "Extract the ID from an org-mode link."
@@ -221,6 +222,40 @@
           (my/format-org-id-markdown-link org-id headline-title nil)))))
 #+end_src
 
+#+begin_src elisp
+  (defun my/is-child-id-p (possible-child-id parent-id)
+    (let ((possible-child-node (my/org-roam-get-node-by-id possible-child-id))
+          (parent-node (my/org-roam-get-node-by-id parent-id)))
+      (when (and possible-child-node parent-node)
+        (my/is-child-node-p possible-child-node parent-node))))
+
+  (defun my/org-roam-nodes-equal-p (node1 node2)
+    "Check if two org-roam nodes NODE1 and NODE2 are equal."
+    (string= (org-roam-node-id node1)
+             (org-roam-node-id node2)))
+
+  ; TODO: Add maximum depth parameter with default
+  (defun my/is-child-node-p (possible-child-node parent-node)
+    "Takes two org nodes and determines if second is an ancestor of the first"
+    (let ((direct-parent (my/org-roam-node-get-parent possible-child-node)))
+      (when direct-parent
+          (if (my/org-roam-nodes-equal-p direct-parent parent-node)
+              t
+            (my/is-child-node-p direct-parent parent-node)))))
+
+  ;; TODO: IF IS PARENT NODE ITSELF
+  (defun my/org-agenda-item-has-parent-p (item parent-id)
+    "Print the :PARENT: property of the ITEM to the *Messages* buffer."
+    (let ((org-parent-node (my/org-roam-get-node-by-id parent-id))
+          (marker (get-text-property 0 'org-hd-marker item)))
+      (when (and org-parent-node marker)
+        (let ((org-node-id (org-entry-get marker "ID" t)))
+          (when org-node-id
+            (let ((org-node (my/org-roam-get-node-by-id org-node-id)))
+              (if (my/org-roam-nodes-equal-p org-node org-parent-node)
+                  t
+                (my/is-child-node-p org-node org-parent-node))))))))
+#+end_src
 *** User Functions
 
 #+begin_src elisp :noweb-ref org-roam-config
@@ -287,6 +322,63 @@
     :custom
     (org-roam-database-connector 'sqlite-builtin))
 #+END_SRC
+
+#+begin_src elisp
+  (use-package org-collector :ensure t)
+#+end_src
+
+
+** Org-Agenda
+*** Org-Super-Agenda
+
+#+begin_src elisp :noweb-ref org-super-agenda-defun
+  (setq org-super-agenda-groups
+        '((:name "Health"
+           :pred (lambda (item)
+                   (my/org-agenda-item-has-parent-p
+                    item
+                    "3ab30a80-b893-44fa-b4e2-1f3db4b82050")))
+          (:name "Finances"
+           :pred (lambda (item)
+                   (my/org-agenda-item-has-parent-p
+                    item
+                    "b0ab4086-a630-47cb-bd7a-f2e9acebdbbf")))
+          (:name "Deal$Made"
+           :pred (lambda (item)
+                   (my/org-agenda-item-has-parent-p
+                    item
+                    "7436c4e1-d15c-4718-b4ae-245ee53134d6")))
+          (:name "Magnify"
+           :pred (lambda (item)
+                   (my/org-agenda-item-has-parent-p
+                    item
+                    "8b5a7d05-12de-4471-a559-af1bffbf740d")))
+          (:name "Household"
+           :pred (lambda (item)
+                   (my/org-agenda-item-has-parent-p
+                    item
+                    "6092bec3-94b2-4b56-ad53-84f99979dd53")))
+
+          ))
+
+  (setq org-agenda-remove-file-column t)
+  (setq org-super-agenda-header-prefix "📌 ")
+  (setq org-agenda-prefix-format
+        '((agenda . " %?-12t% s")
+          (todo . " %e ")
+          (tags . " %-12:c")
+          (search . " %-12:c")))
+
+#+end_src
+
+#+begin_src elisp :noweb yes
+  (use-package org-super-agenda
+    :ensure t
+    :after org-roam
+    :config
+    (org-super-agenda-mode 1)
+    <<org-super-agenda-defun>>)
+#+end_src
 
 * Editing
 :PROPERTIES:
