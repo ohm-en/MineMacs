@@ -5,7 +5,7 @@
 :END:
 #+TITLE: MineMacs
 #+auto_tangle: t
-#+property: header-args :eval never-export :mkdirp yes :noweb yes
+#+property: header-args :eval never-export :mkdirp yes :noweb yes :results output silent
 
 * The Basics
 ** Leader Key
