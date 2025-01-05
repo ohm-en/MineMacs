@@ -8,7 +8,10 @@
 #+property: header-args :eval never-export :mkdirp yes :noweb yes :results output silent
 
 * The Basics
-** Leader Key
+
+** Keybindings
+
+*** Leader Key
 #+begin_src elisp :noweb-ref emacs-hotkeys
   (crafted-package-install-package 'general)
   (use-package general
@@ -21,6 +24,12 @@
     (general-create-definer dw/ctrl-c-keys
       :prefix "C-c")
     (global-set-key (kbd "C-x b") 'consult-buffer))
+#+end_src
+
+*** Mac Bindings
+#+begin_src elisp :noweb-ref emacs-hotkeys
+  (setq mac-command-modifier 'meta)
+  (setq mac-option-modifier 'none)
 #+end_src
 
 ** Theme
