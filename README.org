@@ -251,7 +251,7 @@
         '(
           ("d" "default" plain "%?"
            :target (file+head "Inbox/Orgzly/%<%Y%m%d%H%M%S>-${slug}.org"
-                              "#+tile: ${title}\n") :unnarrowed t)
+                              "#+title: ${title}\n") :unnarrowed t)
         ))
 #+end_src
 
