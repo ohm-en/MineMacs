@@ -616,7 +616,9 @@ add package runtfmt
    :config
    (dw/leader-key-def
     "c"  '(:which-key "Copy")
-    "cl"  'org-store-link))
+    "cl"  'org-store-link
+    "cj" 'org-babel-next-src-block
+    "ck" 'org-babel-previous-src-block))
 
   (use-package org-mode
    :hook (org-mode . dw/org-mode-setup)
