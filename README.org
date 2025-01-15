@@ -246,11 +246,13 @@
   ; TODO: Add maximum depth parameter with default
   (defun my/is-child-node-p (possible-child-node parent-node)
     "Takes two org nodes and determines if second is an ancestor of the first"
-    (let ((direct-parent (my/org-roam-node-get-parent possible-child-node)))
-      (when direct-parent
+    (if (my/org-roam-nodes-equal-p possible-child-node parent-node)
+        t
+      (let ((direct-parent (my/org-roam-node-get-parent possible-child-node)))
+        (when direct-parent
           (if (my/org-roam-nodes-equal-p direct-parent parent-node)
               t
-            (my/is-child-node-p direct-parent parent-node)))))
+            (my/is-child-node-p direct-parent parent-node))))))
 
   ;; TODO: IF IS PARENT NODE ITSELF
   (defun my/org-agenda-item-has-parent-p (item parent-id)
