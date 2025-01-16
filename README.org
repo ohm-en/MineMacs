@@ -212,23 +212,9 @@
           (my/org-roam-get-node-by-id (my/extract-org-id-from-link parent_link))
         nil)))
 
-  (defun my/format-org-id-markdown-link (node-id node-title parent-node-title)
-    (concat "["
-            (if parent-node-title
-                (concat parent-node-title ":")
-              "")
-            node-title "]" "(emacs://" org-id ")"))
-
-  (defun my/create-org-id-markdown-link (org-id)
-    (let ((roam-node (my/org-roam-get-node-by-id org-id)))
-      (if roam-node
-          (let ((parent-roam-node (my/org-roam-node-get-parent roam-node)))
-            (my/format-org-id-markdown-link
-             org-id
-             (org-roam-node-title roam-node)
-             (when parent-roam-node (org-roam-node-title parent-roam-node))))
-        (let ((headline-title (get-current-headline-title)))
-          (my/format-org-id-markdown-link org-id headline-title nil)))))
+  (defun my/format-markdown-link (title protocol path)
+    "Return a link valid link for Markdown based on TITLE, PROTOCOL (like http), and path."
+    (concat "[" title "]" "(" protocol "://" path ")"))
 #+end_src
 
 #+begin_src elisp
@@ -274,22 +260,39 @@
       (or (when-let ((parent (my/org-roam-node-get-parent node)))
             (my/get-node-parent-hierarchy parent nodes))
           nodes)))
+
+  (defun my/get-full-node-title (node)
+    "Returns the title of the node prepended with its ancestor node titles."
+    (mapconcat #'org-roam-node-title (my/get-node-parent-hierarchy node) ":"))
+
+
+  (defun my/get-node-markdown-link (node)
+    "Return a markdown link to the ID of a node titled with the nodes full parent path."
+
+    (my/format-markdown-link (my/get-full-node-title node) "emacs" (org-roam-node-id node)))
+
+  (defun my/create-org-id-markdown-link (org-id)
+    (let ((headline-title (get-current-headline-title)))
+      (my/format-markdown-link headline-title "emacs" org-id)))
 #+end_src
+
 *** User Functions
 
 #+begin_src elisp :noweb-ref org-roam-config
   (defun get-id-as-link ()
      "Retrieves the org-id of the current headline or note, formats it as a URI, and copies it to the kill-ring."
    (interactive)
-   (let ((org-id (org-id-get nil 'create)))
-     (org-kill-new (my/create-org-id-markdown-link org-id))))
+   (let* ((org-id (org-id-get nil 'create))
+          (node (my/org-roam-get-node-by-id org-id)))
+     (if node
+         (org-kill-new (my/get-node-markdown-link node))
+       (org-kill-new (my/create-org-id-markdown-link org-id)))))
 
   (defun my/org-roam-copy-node-as-markdown-link ()
        "Prompts the user to select a node which is copied to the kill ring as a customized link."
        (interactive)
        (let* ((node (org-roam-node-read))
-              (node-id (org-roam-node-id node))
-              (node-link (my/create-org-id-markdown-link node-id)))
+              (node-link (my/my/get-node-markdown-link node)))
          (org-kill-new node-link)))
 
   (defun my/org-roam-node-set-parent ()
@@ -330,7 +333,7 @@
     (org-roam-db-autosync-mode)
     (cl-defmethod org-roam-node-parent-child-title ((node org-roam-node))
       "Get the title of the parent node or an empty string if no parent is found."
-      (mapconcat #'org-roam-node-title (my/get-node-parent-hierarchy node) ":"))
+      (my/get-full-node-title node))
 
     (setq org-roam-node-display-template
         (concat "${parent-child-title:*}"
