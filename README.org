@@ -266,6 +266,14 @@
               (if (my/org-roam-nodes-equal-p org-node org-parent-node)
                   t
                 (my/is-child-node-p org-node org-parent-node))))))))
+
+  (defun my/get-node-parent-hierarchy (node &optional lower-nodes)
+    "Return a decending list of child nodes recursively ending with the initial NODE.
+    LOWER-NODES allow prepending already calculated children and is used internal to keep state."
+    (let ((nodes (cons node (or lower-nodes '()))))
+      (or (when-let ((parent (my/org-roam-node-get-parent node)))
+            (my/get-node-parent-hierarchy parent nodes))
+          nodes)))
 #+end_src
 *** User Functions
 
@@ -322,9 +330,7 @@
     (org-roam-db-autosync-mode)
     (cl-defmethod org-roam-node-parent-child-title ((node org-roam-node))
       "Get the title of the parent node or an empty string if no parent is found."
-      (or (when-let ((parent (my/org-roam-node-get-parent node)))
-            (concat (org-roam-node-title parent) ":" (org-roam-node-title node)))
-          (org-roam-node-title node)))
+      (mapconcat #'org-roam-node-title (my/get-node-parent-hierarchy node) ":"))
 
     (setq org-roam-node-display-template
         (concat "${parent-child-title:*}"
