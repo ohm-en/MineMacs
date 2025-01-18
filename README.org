@@ -292,7 +292,7 @@
        "Prompts the user to select a node which is copied to the kill ring as a customized link."
        (interactive)
        (let* ((node (org-roam-node-read))
-              (node-link (my/my/get-node-markdown-link node)))
+              (node-link (my/get-node-markdown-link node)))
          (org-kill-new node-link)))
 
   (defun my/org-roam-node-set-parent ()
