@@ -43,7 +43,7 @@
        modus-themes-bold-constructs nil)
    (setq modus-themes-common-palette-overrides
        modus-themes-preset-overrides-intense)
-   (load-theme 'modus-operandi)
+   (load-theme 'modus-vivendi)
    (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
 
    (use-package org-bullets
