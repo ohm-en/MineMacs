@@ -40,19 +40,19 @@
    :ensure t
    :config
    (setq modus-themes-org-blocks 'grey-background
-       modus-themes-bold-constructs nil)
+         modus-themes-bold-constructs nil)
    (setq modus-themes-common-palette-overrides
-       modus-themes-preset-overrides-intense)
+         modus-themes-preset-overrides-intense)
    (load-theme 'modus-vivendi)
    (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
 
-   (use-package org-bullets
-     :ensure t
-     :hook (org-mode . org-bullets-mode)
-     :config
-     (setq org-bullets-bullet-list '("◉" "○" "✸" "✿" "▶"))
-     (setq org-ellipsis "⤵")
-     (setq org-hide-leading-stars t))
+  (use-package org-bullets
+    :ensure t
+    :hook (org-mode . org-bullets-mode)
+    :config
+    (setq org-bullets-bullet-list '("◉" "○" "✸" "✿" "▶"))
+    (setq org-ellipsis "⤵")
+    (setq org-hide-leading-stars t))
 #+end_src
 
 * Window & File Navigation
