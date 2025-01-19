@@ -114,7 +114,7 @@
 #+end_src
 * Org-mode
 :PROPERTIES:
-:header-args: :noweb-ref emacs-structured-notes 
+:header-args: :noweb-ref emacs-structured-notes :results silent
 :END:
 ** Org-Roam
 
@@ -212,6 +212,9 @@
           (my/org-roam-get-node-by-id (my/extract-org-id-from-link parent_link))
         nil)))
 
+  (defun my/org-roam-node-get-alias (node)
+    (my/org-roam-get-node-property node "ALIAS"))
+
   (defun my/format-markdown-link (title protocol path)
     "Return a link valid link for Markdown based on TITLE, PROTOCOL (like http), and path."
     (concat "[" title "]" "(" protocol "://" path ")"))
@@ -261,15 +264,28 @@
             (my/get-node-parent-hierarchy parent nodes))
           nodes)))
 
-  (defun my/get-full-node-title (node)
+  (defun my/get-full-node-title (node )
     "Returns the title of the node prepended with its ancestor node titles."
     (mapconcat #'org-roam-node-title (my/get-node-parent-hierarchy node) ":"))
 
+  (defun my/get-shorthand-node-title(node &optional accumulated-title)
+    "Returns the title of the node prepended with its ancestor node titles.
+  Short-circuits if an alias is found, returning the alias and the titles leading up to it."
+    (let ((title (if-let* ((alias (my/org-roam-node-get-alias node)))
+                     alias
+                   (let ((node-title (org-roam-node-title node)))
+                     (or (when-let ((parent (my/org-roam-node-get-parent node)))
+                         (my/get-shorthand-node-title parent node-title))
+                       node-title))))
+          (previous-title (if accumulated-title
+                             (concat ":" accumulated-title)
+                           "")))
+      (concat title previous-title)))
 
   (defun my/get-node-markdown-link (node)
     "Return a markdown link to the ID of a node titled with the nodes full parent path."
 
-    (my/format-markdown-link (my/get-full-node-title node) "emacs" (org-roam-node-id node)))
+    (my/format-markdown-link (my/get-shorthand-node-title node) "emacs" (org-roam-node-id node)))
 
   (defun my/create-org-id-markdown-link (org-id)
     (let ((headline-title (get-current-headline-title)))
