@@ -91,7 +91,6 @@
   (use-package projectile
   :ensure t
   :init
-  (setq projectile-project-search-path '("~/Knowledgebase/Projects" "~/Knowledgebase/Areas"))
   (projectile-mode +1))
 
   (dw/leader-key-def
