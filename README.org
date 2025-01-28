@@ -665,72 +665,7 @@ add package runtfmt
 
   (use-package doct 
    :ensure t
-   :commands (doct)
-   :config 
-      (setq org-capture-templates
-          (doct '(("File" :keys "t" 
-                   :file "~/Knowledgebase/Org/tasks.org"
-                   :headline "Inbox"
-                   :prepend t
-                   :template ("* PROCESS  %?"
-                               ":LOGBOOK:"
-                               "- State \"PROCESS\"    from \"\"    %U"
-                               ":END:"))
-                  ("Proposal" :keys "p"
-                   :file "~/Knowledgebase/Org/proposals.org"
-                   :headline "Proposals"
-                   :prepend t
-                   :jump-to-captured t
-                   :template ("* PROPOSE %^{TITLE}%^{link}p"
-                               "** Job Description"
-                               "%?"
-                               "** Proposal"))
-                  ("Work Order" :keys "o"
-                   :file "~/Knowledgebase/Org/20230126110626-work_orders.org"
-                   :headline "Orders"
-                   :jump-to-captured t
-                   :template ("* WO %^{IS}p%^{REQ}p %?"
-                               ":LOGBOOK:"
-                               "- State \"WO\"    from \"\"    %U"
-                               ":END:"
-                               "** Pre"
-                               "** Work"
-                               "** Post"))
-                  ("Code Snippet with Source Block"
-                   :keys "c"
-                   :file "~/Knowledgebase/20231103090147-code_snippets.org" ; Replace with the path to your file
-                   :headline "Inbox"
-                   :template ("* %?\n#+BEGIN_SRC %^{Language|python|emacs-lisp|javascript|...}\n%i\n#+END_SRC\n")
-                   :prepare-finalize (lambda ()
-                                       (when (region-active-p)
-                                        (let ((selected-text (buffer-substring-no-properties (region-beginning) (region-end))))
-                                            (deactivate-mark)
-                                            (insert (format "#+BEGIN_SRC %s\n%s\n#+END_SRC\n"
-                                                            (symbol-name major-mode)
-                                                            selected-text))))))))))
-
-  ;; Until the above works again
-  (setq org-capture-templates
-   '(("t" "Task" entry (file "~/Knowledgebase/Org/tasks.org")
-       "* PROCESS %?\n:LOGBOOK:\n- State \"PROCESS\"    from \"\"    %U\n:END:"
-       :prepend t
-       :headline "Inbox")
-
-     ("p" "Proposal" entry (file "~/Knowledgebase/Org/proposals.org")
-      "* PROPOSE %^{TITLE}\n%^{link}\n** Job Description\n%?\n** Proposal"
-      :prepend t
-      :jump-to-captured t
-      :headline "Proposals")
-
-     ("o" "Work Order" entry (file "~/Knowledgebase/Org/20230126110626-work_orders.org")
-      "* WO %^{IS}p%^{REQ}p %?\n:LOGBOOK:\n- State \"WO\"    from \"\"    %U\n:END:\n** Pre\n** Work\n** Post"
-      :jump-to-captured t
-      :headline "Orders")
-
-     ("c" "Code Snippet with Source Block" entry (file "~/Knowledgebase/20231103090147-code_snippets.org")
-      "* %?\n#+BEGIN_SRC %^{Language|python|emacs-lisp|java|...}\n%i\n#+END_SRC\n%a"
-      :prepend t
-      :headline "Inbox")))
+   :commands (doct))
 
   (setq org-agenda-custom-commands
    '(("w" "Work"
@@ -746,7 +681,6 @@ add package runtfmt
             '(org-agenda-skip-entry-if 'notregexp "^\\*+.*:work:"))
         (org-agenda-skip-function
             '(org-agenda-skip-entry-if 'notdeadline 'notscheduled))))))
-    
 #+end_src
 
 #+RESULTS:
