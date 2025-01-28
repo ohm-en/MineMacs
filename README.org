@@ -133,21 +133,6 @@
   (defun get-current-headline-title()
     (or (org-entry-get nil "ITEM") (car (cdr (car (org-collect-keywords '("title")))))))
 
-  ;; https://systemcrafters.net/build-a-second-brain-in-emacs/5-org-roam-hacks/#streamlined-custom-capture-for-tasks-and-notes
-  (defun my/org-roam-capture-inbox ()
-     (interactive)
-   (org-roam-capture- :node (org-roam-node-create)
-                   :templates '(("t" "TODO" entry
-                                   "* PROCESS %? \n:LOGBOOK:\n- State \"PROCESS\"    from \"\"    %U \n:END:\n"
-                                   :target (file+head+olp "tasks.org" "#+title ${title}\n" ("Inbox"))
-                                   :prepend
-                                   :jump-to-captured t))
-                               ("p" "PROPOSE" entry
-                                   "* PROPOSE %^{title}\n:PROPERTIES:\n:link:     %^{link}\n:END:\n** Job Description\n%?\n** Proposal\n:properties:\n:end:\n"
-                                   :target (file+head+olp "proposals.org" "#+title ${title}\n" ("Proposals"))
-                                   :prepend
-                                   :jump-to-captured t)))
-
   (defun gsgx/org-roam-create-note-from-headline ()
     "Create an Org-roam note from the current headline if it doesn't
   exist without jumping to it"
