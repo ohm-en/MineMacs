@@ -854,8 +854,7 @@ add package runtfmt
   (use-package elfeed-org
       :ensure t
       :config
-      (elfeed-org)
-      (setq rmh-elfeed-org-files (list "~/Knowledgebase/Org/elfeed.org")))
+      (elfeed-org))
 
   (require 'elfeed)
   (require 'mpv)
