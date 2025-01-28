@@ -807,15 +807,8 @@ add package runtfmt
     (yas-reload-all))
 
   (defun my/autoinsert-yas-expand()
-  "Replace text in yasnippet template."
-  (yas/expand-snippet (buffer-string) (point-min) (point-max)))
-
-  (custom-set-variables
-   '(auto-insert 'other)
-   '(auto-insert-directory "~/Knowledgebase/Areas/emacs-auto-templates")
-   '(auto-insert-alist
-     '((("invoice\\.org\\'" . "Org-mode Invoice") . ["invoice.org" org-mode my/autoinsert-yas-expand]))))
-
+    "Replace text in yasnippet template."
+    (yas/expand-snippet (buffer-string) (point-min) (point-max)))
 #+end_src
 
 * Applications
