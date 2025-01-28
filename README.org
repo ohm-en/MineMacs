@@ -1020,6 +1020,11 @@ And cmake appears to require make
 #+end_src
 
 ** Export
+#+NAME: load-custom.el
+#+begin_src elisp
+  (setq custom-file "~/.config/crafted-emacs/custom.el")
+  (load custom-file)
+#+end_src
 
 #+begin_src elisp :tangle ~/.config/crafted-emacs/config.el 
   <<emacs-package-management>>
@@ -1097,6 +1102,8 @@ And cmake appears to require make
 
   ;; Babel
   (org-babel-lob-ingest "~/Knowledgebase/Areas/The_Timeline/obsidian-daily-log-helper/README.org")
+
+  <<load-custom.el>>
 
   <<emacs-theme>>
 
