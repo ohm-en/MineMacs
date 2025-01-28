@@ -353,35 +353,6 @@
 *** Org-Super-Agenda
 
 #+begin_src elisp :noweb-ref org-super-agenda-defun
-  (setq org-super-agenda-groups
-        '((:name "Health"
-           :pred (lambda (item)
-                   (my/org-agenda-item-has-parent-p
-                    item
-                    "3ab30a80-b893-44fa-b4e2-1f3db4b82050")))
-          (:name "Finances"
-           :pred (lambda (item)
-                   (my/org-agenda-item-has-parent-p
-                    item
-                    "b0ab4086-a630-47cb-bd7a-f2e9acebdbbf")))
-          (:name "Deal$Made"
-           :pred (lambda (item)
-                   (my/org-agenda-item-has-parent-p
-                    item
-                    "7436c4e1-d15c-4718-b4ae-245ee53134d6")))
-          (:name "Magnify"
-           :pred (lambda (item)
-                   (my/org-agenda-item-has-parent-p
-                    item
-                    "8b5a7d05-12de-4471-a559-af1bffbf740d")))
-          (:name "Household"
-           :pred (lambda (item)
-                   (my/org-agenda-item-has-parent-p
-                    item
-                    "6092bec3-94b2-4b56-ad53-84f99979dd53")))
-
-          ))
-
   (setq org-agenda-remove-file-column t)
   (setq org-super-agenda-header-prefix "📌 ")
   (setq org-agenda-prefix-format
