@@ -13,8 +13,8 @@
 
 *** Leader Key
 #+begin_src elisp :noweb-ref emacs-hotkeys
-  (crafted-package-install-package 'general)
   (use-package general
+    :ensure t
     :config
     (general-evil-setup t)
     (general-create-definer dw/leader-key-def
@@ -34,8 +34,6 @@
 
 ** Theme
 #+begin_src elisp :noweb-ref emacs-theme
-  (crafted-package-install-package 'modus-themes)
-
   (use-package modus-themes
    :ensure t
    :config
@@ -343,11 +341,6 @@
     (org-roam-database-connector 'sqlite-builtin))
 #+END_SRC
 
-#+begin_src elisp
-  (use-package org-collector :ensure t)
-#+end_src
-
-
 ** Org-Agenda
 *** Org-Super-Agenda
 
@@ -384,8 +377,6 @@
 #+RESULTS:
 
 #+begin_src elisp
-  (crafted-package-install-package 'helm)
-
   (use-package helm
      :ensure t
      :init
@@ -404,21 +395,19 @@
      :config
    (helm-mode 1))
 
-  (crafted-package-install-package 'lsp-mode)
-  (crafted-package-install-package 'lsp-ui)
-  (crafted-package-install-package 'dap-mode)
   (use-package dap-mode
   ;; Uncomment the config below if you want all UI panes to be hidden by default!
   ;; :custom
   ;; (lsp-enable-dap-auto-configure nil)
   ;; :config
   ;; (dap-ui-mode 1)
+   :ensure t
    :config
    (require 'dap-node)
    (dap-node-setup)) ;; Automatically installs Node debug adapter if needed
 
-  (use-package 
-   lsp-mode
+  (use-package lsp-mode
+   :ensure t
    :hook ((js2-mode typescript-mode) . lsp)
    :commands lsp)
 
@@ -447,15 +436,19 @@
    (setq lsp-ui-doc-position 'bottom)
    (lsp-ui-doc-show))
 
-  (use-package helm-lsp :ensure t :commands helm-lsp-workspace-symbol)
+  (use-package helm-lsp
+    :ensure t
+    :commands helm-lsp-workspace-symbol)
 
-  (use-package lsp-treemacs :ensure t :commands lsp-treemacs-errors-list)
+  (use-package lsp-treemacs
+    :ensure t
+    :commands lsp-treemacs-errors-list)
 
-  (use-package dap-node)
-
-  (crafted-package-install-package 'which-key)
+  (use-package dap-node
+    :ensure t)
 
   (use-package which-key
+   :ensure t
    :config
    (which-key-mode))
 
@@ -476,48 +469,44 @@
 #+end_src
 *** COMMENT Eglot 
 #+begin_src elisp
-(crafted-package-install-package 'project)
-(crafted-package-install-package 'eglot)
-(use-package eglot
-:ensure t)
+  (use-package project
+    :ensure t)
 
-(crafted-package-install-package 'orderless)
-(use-package orderless
-:demand t
-:config
-(setq completion-styles '(orderless flex)
-    completion-category-overrides '((eglot (styles . (orderless flex))))))
+  (use-package eglot
+    :ensure t)
+
+  (use-package orderless
+    :ensure t
+    :demand t
+    :config
+    (setq completion-styles '(orderless flex)
+          completion-category-overrides '((eglot (styles . (orderless flex))))))
 
 #+end_src
 
 *** Clojure(Script) 
 #+begin_src elisp
-(crafted-package-install-package 'cider)
-
-(use-package cider
-:mode "\\.clj[sc]?\\'"
-:config
-(evil-collection-cider-setup))
+  (use-package cider
+    :ensure t
+    :mode "\\.clj[sc]?\\'"
+    :config
+    (evil-collection-cider-setup))
 
 #+end_src
 ** Language Integrations 
 *** JavaScript/TypeScript
 #+begin_src elisp
-  (crafted-package-install-package 'js2-mode)
   (defun dw/set-js-indentation ()
   (setq js-indent-level 2)
   (setq display-line-numbers 'relative)
   (setq evil-shift-width js-indent-level)
   (setq-default tab-width 2))
 
-  (crafted-package-install-package 'typescript-mode)
-
   (use-package typescript-mode
+    :ensure t
     :mode "\\.ts\\'"
     :config
     (setq typescript-indent-level 2))
-
-  (crafted-package-install-package 'js2-mode)
 
   (use-package js2-mode
     :ensure t
@@ -612,10 +601,9 @@ add package runtfmt
                    (directory-files-recursively "~/Knowledgebase/" "\\.org$"))))
 
 
-  (crafted-package-install-package 'toc-org)
-
   (use-package toc-org
-   :hook (org-mode . toc-org-mode))
+    :ensure t
+    :hook (org-mode . toc-org-mode))
 
 
   (use-package doct 
@@ -664,8 +652,6 @@ add package runtfmt
 #+end_src
 *** YAML
 #+begin_src elisp
-  (crafted-package-install-package 'yaml-mode)
-
   (use-package yaml-mode
     :ensure t
     :mode "\\.yml\\'")
@@ -681,7 +667,6 @@ add package runtfmt
 
 ** Automatic Formatting
 #+begin_src elisp
-  (crafted-package-install-package 'apheleia)
   (use-package apheleia
     :ensure t
     :config
@@ -717,49 +702,50 @@ add package runtfmt
 
 *** LISP Navigation
 #+begin_src elisp
-;; (crafted-package-install-package 'lispy)
-;; (crafted-package-install-package 'lispyville)
+  ;; (use-package lispy
+  ;;   :ensure t
+  ;;   :hook ((emacs-lisp-mode . lispy-mode)
+  ;;          (scheme-mode . lispy-mode)
+  ;;          (clojure-mode . lispy-mode)
+  ;;          (clojurescript-mode . lispy-mode)))
 
-;; (use-package lispy
-;;   :hook ((emacs-lisp-mode . lispy-mode)
-;;          (scheme-mode . lispy-mode)
-;;          (clojure-mode . lispy-mode)
-;;          (clojurescript-mode . lispy-mode)))
+  ;; (use-package lispyville
+  ;;   :ensure t
+  ;;   :hook ((lispy-mode . lispyville-mode))
+  ;;   :config
+  ;;   (lispyville-set-key-theme '(operators c-w additional)))
 
-;; (use-package lispyville
-;;   :hook ((lispy-mode . lispyville-mode))
-;;   :config
-;;   (lispyville-set-key-theme '(operators c-w additional)))
-
-(crafted-package-install-package 'paredit)
+  (use-package paraedit
+    :ensure t)
 #+end_src
 
 *** hl-todo
 #+begin_src elisp
-  (crafted-package-install-package 'hl-todo)
   (use-package hl-todo
-  :defer t
-  :hook (prog-mode . hl-todo-mode)
-  :config
-  (setq hl-todo-keyword-faces
-      '(("TODO"   . "#FF0000")
-      ("FIXME"  . "#FF4500")
-      ("DEBUG"  . "#1E90FF")
-      ("NOTE"   . "#FFFF00")
-      ("GOTCHA" . "#FFD700")))
-  (setq hl-todo-include-modes '(prog-mode)))
+    :ensure t
+    :defer t
+    :hook (prog-mode . hl-todo-mode)
+    :config
+    (setq hl-todo-keyword-faces
+          '(("TODO"   . "#FF0000")
+            ("FIXME"  . "#FF4500")
+            ("DEBUG"  . "#1E90FF")
+            ("NOTE"   . "#FFFF00")
+            ("GOTCHA" . "#FFD700")))
+    (setq hl-todo-include-modes '(prog-mode)))
 #+end_src
 
 *** Yasnippet
 #+begin_src elisp
-  (crafted-package-install-package 'yasnippet)
-  (crafted-package-install-package 'yasnippet-snippets)
-
   (use-package yasnippet
+    :ensure t
     :hook ((prog-mode . yas-minor-mode)
            (org-mode . yas-minor-mode))
     :config
     (yas-reload-all))
+
+  (use-package yasnippet-snippets
+    :ensure t)
 
   (defun my/autoinsert-yas-expand()
     "Replace text in yasnippet template."
@@ -809,10 +795,6 @@ add package runtfmt
 #+end_src
 ** Elfeed
 #+begin_src elisp
-  (crafted-package-install-package 'elfeed)
-  (crafted-package-install-package 'elfeed-org)
-  (crafted-package-install-package 'mpv)
-
   (use-package elfeed
       :ensure t
       :config
@@ -825,6 +807,9 @@ add package runtfmt
       :ensure t
       :config
       (elfeed-org))
+
+  (use-package mpv
+    :ensure t)
 
   (require 'elfeed)
   (require 'mpv)
@@ -871,21 +856,18 @@ add package runtfmt
 ** Magit (git client)
 
 #+begin_src elisp
-  (crafted-package-install-package 'magit)
-
   (use-package magit
     :ensure t
     :general
     (general-nmap "SPC g g" 'magit-status))
 
-
-  (crafted-package-install-package 'magit-todos)
-
   (use-package magit-todos
+    :ensure t
     :defer t
     :hook (magit-mode . magit-todos-mode))
 
-  (crafted-package-install-package 'orgit)
+  (use-package orgit
+    :ensure t)
 #+end_src
 
 * Utility 
@@ -902,8 +884,8 @@ Get cache files outta my project tree!
 
 ** pyenv
 #+begin_src elisp
-(use-package pyvenv
-:ensure t)
+  (use-package pyvenv
+    :ensure t)
 #+end_src
 
 #+RESULTS:
@@ -953,16 +935,17 @@ vterm needs CMake to be compiled
 And cmake appears to require make
 ** Package Management
 #+begin_src elisp :noweb-ref emacs-package-management
-(require 'package)
+  (require 'package)
 
-;; (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-;;                          ("melpa-stable" . "https://stable.melpa.org/packages/")
-;;                          ("org" . "https://orgmode.org/elpa/")
-;;                          ("elpa" . "https://elpa.gnu.org/packages/")))
+  ;; (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+  ;;                          ("melpa-stable" . "https://stable.melpa.org/packages/")
+  ;;                          ("org" . "https://orgmode.org/elpa/")
+  ;;                          ("elpa" . "https://elpa.gnu.org/packages/")))
 
-(unless (package-installed-p 'use-package)
-(package-install 'use-package))
-(require 'use-package)
+  (unless (package-installed-p 'use-package)
+    (package-install 'use-package))
+
+  (require 'use-package)
 
 #+end_src
 
@@ -1003,8 +986,8 @@ And cmake appears to require make
    (setq ispell-program-name "aspell")
    (setq ispell-silently-savep t))
 
-  (crafted-package-install-package 'flymake-aspell)
   (use-package flymake-aspell
+    :ensure t
     :after flymake
     :hook
     ((text-mode org-mode yaml-mode markdown-mode git-commit-mode) . flymake-aspell-setup))
@@ -1014,8 +997,6 @@ And cmake appears to require make
   ;;;;;;;;;;;;;;;;;;
   ;; ;; Hyperbole ;;
   ;;;;;;;;;;;;;;;;;;
-
-  (crafted-package-install-package 'hyperbole)
 
   (use-package hyperbole
      :ensure t
