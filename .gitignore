@@ -1,0 +1,17 @@
+.cache
+/README.el
+/.extension/
+/auto-save-list/
+/backups/
+/bookmarks
+/cache/
+/custom.el
+/elfeed/
+/elpa/
+/eshell/
+/history
+/org-roam.db
+/projectile-bookmarks.eld
+/quelpa/
+/transient/
+/var/

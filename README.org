@@ -5,11 +5,130 @@
 :END:
 #+TITLE: MineMacs
 #+auto_tangle: t
-#+property: header-args :eval never-export :mkdirp yes :noweb yes :results output silent
+#+property: header-args :eval never-export :mkdirp yes :results silent
 
 * The Basics
+** Lexical Binding
+#+begin_src elisp
+  ;;; README.el --- Global settings -*- lexical-binding: t; -*-
+#+end_src
 
-** Keybindings
+** TODO General
+Some sane defaults copied from crafted-emacs. 
+
+#+begin_src elisp 
+  ;; Revert Dired and other buffers
+  (customize-set-variable 'global-auto-revert-non-file-buffers t)
+
+  ;; Revert buffers when the underlying file has changed
+  (global-auto-revert-mode 1)
+
+  ;; Typed text replaces the selection if the selection is active,
+  ;; pressing delete or backspace deletes the selection.
+  (delete-selection-mode)
+
+  ;; Use spaces instead of tabs
+  (setq-default indent-tabs-mode nil)
+
+  (setq use-short-answers t)
+
+  ;; Turn on recentf mode
+  (add-hook 'after-init-hook #'recentf-mode)
+  (setq recentf-save-file
+        (expand-file-name "recentf" (expand-config-directory "cache/")))
+
+  ;; Do not save duplicates in kill-ring
+  (customize-set-variable 'kill-do-not-save-duplicates t)
+
+  ;; Make scrolling less stuttered
+  (setq auto-window-vscroll nil)
+  (customize-set-variable 'fast-but-imprecise-scrolling t)
+  (customize-set-variable 'scroll-conservatively 101)
+  (customize-set-variable 'scroll-margin 0)
+  (customize-set-variable 'scroll-preserve-screen-position t)
+
+  ;; Better support for files with long lines
+  (setq-default bidi-paragraph-direction 'left-to-right)
+  (setq-default bidi-inhibit-bpa t)
+  (global-so-long-mode 1)
+
+  ;; Make shebang (#!) file executable when saved
+  (add-hook 'after-save-hook #'executable-make-buffer-file-executable-if-script-p)
+
+  ;; Enable savehist-mode for command history
+  (savehist-mode 1)
+#+end_src
+
+** Default UI
+#+begin_src elisp
+  ;; Remove some unneeded UI elements
+  (setq inhibit-startup-message t)
+  (push '(tool-bar-lines . 0) default-frame-alist)
+  (push '(menu-bar-lines . 0) default-frame-alist)
+  (push '(vertical-scroll-bars) default-frame-alist)
+  (push '(mouse-color . "white") default-frame-alist)
+  (tool-bar-mode   -1)
+  (scroll-bar-mode -1)
+#+end_src
+
+** Font
+#+begin_src elisp
+  (add-hook 'emacs-startup-hook
+      (lambda ()
+        (custom-set-faces
+         `(default ((t (:font "JetBrainsMono Nerd Font"))))
+         `(fixed-pitch ((t (:inherit (default)))))
+         `(fixed-pitch-serif ((t (:inherit (default)))))
+         `(variable-pitch ((t (:font "Fira Sans")))))))
+#+end_src
+
+** General Keybindings
+*** EVIL Mode
+#+begin_src elisp
+
+  (use-package evil
+    :ensure t
+    :init
+    (customize-set-variable 'evil-want-integration t)
+    (customize-set-variable 'evil-want-keybinding nil)
+    (customize-set-variable 'evil-want-C-i-jump nil)
+    (customize-set-variable 'evil-respect-visual-line-mode t)
+    (customize-set-variable 'evil-undo-system 'undo-redo)
+    ;; TODO: Do I want these?
+    ;; (customize-set-variable 'evil-want-C-i-jump t)
+    ;; (customize-set-variable 'evil-want-Y-yank-to-eol t)
+    ;; (customize-set-variable 'evil-want-fine-undo t))
+    :config
+    (evil-mode 1)
+    (setq evil-auto-indent t)
+    ;; Make evil search more like vim
+    (evil-select-search-module 'evil-search-module 'evil-search)
+    ;; Make C-g revert to normal state
+    (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+    ;; Rebind `universal-argument' to 'C-M-u' since 'C-u' now scrolls the buffer
+    (global-set-key (kbd "C-M-u") 'universal-argument)
+    ;; Use visual line motions even ouside of visual-line-mode buffers
+    (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+    (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+    ;; Make sure some modes start in Emacs state
+    (dolist (mode '(custom-mode
+                    eshell-mode
+                    term-mode))
+      (add-to-list 'evil-emacs-state-modes mode)))
+
+  (use-package evil-nerd-commenter
+    :requires evil
+    :ensure t
+    :config
+    ;; Enables Evil Nerd Commenter
+    (evilnc-default-hotkeys))
+
+  (use-package evil-collection
+    :requires evil
+    :ensure t
+    :config
+    (evil-collection-init))
+#+end_src
 
 *** Leader Key
 #+begin_src elisp :noweb-ref emacs-hotkeys
@@ -26,37 +145,19 @@
     (global-set-key (kbd "C-x b") 'consult-buffer))
 #+end_src
 
-*** Mac Bindings
+*** MacOS Bindings
 #+begin_src elisp :noweb-ref emacs-hotkeys
   (setq mac-command-modifier 'meta)
   (setq mac-option-modifier 'none)
 #+end_src
 
-** Theme
-#+begin_src elisp :noweb-ref emacs-theme
-  (use-package modus-themes
-   :ensure t
-   :config
-   (setq modus-themes-org-blocks 'grey-background
-         modus-themes-bold-constructs nil)
-   (setq modus-themes-common-palette-overrides
-         modus-themes-preset-overrides-intense)
-   (load-theme 'modus-vivendi)
-   (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
-
-  (use-package org-bullets
-    :ensure t
-    :hook (org-mode . org-bullets-mode)
-    :config
-    (setq org-bullets-bullet-list '("◉" "○" "✸" "✿" "▶"))
-    (setq org-ellipsis "⤵")
-    (setq org-hide-leading-stars t))
+** TODO Weird Requirements
+#+begin_src elisp
+  (use-package el-mock
+    :ensure t)
 #+end_src
 
 * Window & File Navigation
-:PROPERTIES:
-:header-args: :noweb-ref project-management
-:END:
 ** Default Opens
 #+begin_src elisp
   (add-to-list 'auto-mode-alist '("\\.pdf\\'" . doc-view-mode))
@@ -66,30 +167,30 @@
 *** Perspective-el
 #+begin_src elisp 
   (use-package perspective
-  :ensure t
-  :custom
-  (persp-mode-prefix-key (kbd "C-c M-p"))
-  :init
-  (persp-mode))
+    :ensure t
+    :custom
+    (persp-mode-prefix-key (kbd "C-c M-p"))
+    :init
+    (persp-mode))
 
   (use-package persp-projectile
-  :ensure t
-  :after (perspective projectile))
+    :ensure t
+    :after (perspective projectile))
 #+end_src
 
 #+begin_src elisp
-(use-package treemacs-perspective 
-:after (treemacs perspective)
-:ensure t
-:config (treemacs-set-scope-type 'Perspectives))
+  (use-package treemacs-perspective 
+    :after (treemacs perspective)
+    :ensure t
+    :config (treemacs-set-scope-type 'Perspectives))
 #+end_src
 ** Project Management
-
+*** Projectile
 #+begin_src elisp 
   (use-package projectile
-  :ensure t
-  :init
-  (projectile-mode +1))
+    :ensure t
+    :init
+    (projectile-mode +1))
 
   (dw/leader-key-def
     "SPC" 'projectile-find-file)
@@ -109,62 +210,114 @@
       "pA" '(projectile-add-known-project :which-key "add known project")
       "pl" '(projectile-list-projects :which-key "list projects"))
 #+end_src
-* Org-mode
-:PROPERTIES:
-:header-args: :noweb-ref emacs-structured-notes :results silent
-:END:
-** Org-Roam
 
-#+begin_src elisp 
-  (defun org-get-buffer-title ()
-     (let* ((parsed (org-element-parse-buffer 'element))
-          (title (org-element-map parsed 'keyword
-                    (lambda (k)
-                      (when (string-equal (org-element-property :key k) "TITLE")
-                        (org-element-property :value k))))))
-     (when title
-       (if (interactive-p)
-           (message (car title)))
-       (car title))))
-
-  (defun get-current-headline-title()
-    (or (org-entry-get nil "ITEM") (car (cdr (car (org-collect-keywords '("title")))))))
-
-  (defun gsgx/org-roam-create-note-from-headline ()
-    "Create an Org-roam note from the current headline if it doesn't
-  exist without jumping to it"
-    (let* ((title (nth 4 (org-heading-components))))
-      ;; TODO: How can I just use the title without user input?
-      (node (org-roam-node-read title)))
-    (if (org-roam-node-file node)
-      (message "Skipping %s, node already exists" title)
-      ;; Without this the subsequent kills seem to be grouped together, not
-      ;; sure why
-      (kill-new "")
-      (org-cut-subtree)
-      (org-roam-capture- :node node)
-      (org-paste-subtree)
-      (kill-whole-line)
-      (org-capture-finalize nil)
-      ;; `org-map-entries' call continue from the right place
-      (setq org-map-continue-from
-          (org-element-property :begin (org-element-at-point)))))
-
-  (defun gsgx/org-roam-create-note-from-headlines ()
-    (interactive)
-    (if (region-active-p)
-        ;; `region-start-level' means we'll map over only headlines that are at
-        ;; the same level as the first headline in the region. This may or may not
-        ;; be what you want
-        (org-map-entries
-         'gsgx/org-roam-create-note-from-headline t 'region-start-level)
-      ;; If no region was selected, just create the note from the current headline
-      (gsgx/org-roam-create-note-from-headline)))
+*** envrc
+#+begin_src elisp
+  (use-package envrc
+    :ensure t
+    ;;:after (flycheck) ; or other minor modes you want to load before envrc
+    :config
+    (envrc-global-mode))
 #+end_src
 
-*** Helper Functions
+* Editing
+** Language Integrations 
+*** Text
+#+begin_src elisp
+  (use-package ispell
+   :init
+   (setq ispell-dictionary "en_US")
+   (setq ispell-program-name "aspell")
+   (setq ispell-silently-savep t))
 
-#+begin_src elisp :noweb-ref org-roam-config
+  (use-package flymake-aspell
+    :ensure t
+    :after flymake
+    :hook
+    ((text-mode org-mode yaml-mode markdown-mode git-commit-mode) . flymake-aspell-setup))
+
+  (define-key minibuffer-local-map (kbd "C-v") 'yank)
+#+end_src
+
+*** Org-mode
+**** Org
+#+begin_src elisp
+  (use-package org
+   :config
+   (setq org-startup-indented t)
+   (setq org-log-into-drawer t)
+   (dw/leader-key-def
+    "c"  '(:which-key "Copy")
+    "cl" 'org-store-link
+    "ct" 'org-time-stamp-inactive
+    "cj" 'org-babel-next-src-block
+    "ck" 'org-babel-previous-src-block))
+
+
+  (use-package toc-org
+    :ensure t
+    :hook (org-mode . toc-org-mode))
+
+
+  (use-package doct 
+   :ensure t
+   :commands (doct))
+#+end_src
+
+#+begin_src elisp
+  (use-package org-edna
+     :ensure t
+     :hook
+     (org-mode . org-edna-mode)
+     :config
+     (setq org-edna-use-inheritance t)
+     (org-edna-load)
+     ;; define a function to process the current Org entry for Edna properties
+     (defun my/org-process-edna (&rest args)
+         "Process the current Org entry for Edna properties."
+      (when (org-entry-get nil "TRIGGER")
+       (org-edna-process-current-entry)))
+     ;; add the function to the org-trigger-hook and org-after-todo-state-change-hook
+     (add-hook 'org-trigger-hook #'my/org-process-edna)
+     (add-hook 'org-after-todo-state-change-hook #'my/org-process-edna))
+#+end_src
+**** Org-Roam
+***** Package Configuration
+#+BEGIN_SRC elisp :noweb yes
+  (use-package org-roam
+    :after org
+    :after (org emacsql-sqlite-builtin)
+    :bind (("C-c n l" . org-roam-buffer-toggle)
+           ("C-c n f" . org-roam-node-find)
+           ("C-c n g" . org-roam-graph)
+           ("C-c n w" . org-roam-refile)
+           ("C-c n i" . org-roam-node-insert)
+           ("C-c n c" . org-capture)
+           ("C-c n j" . org-roam-dailies-capture-today)
+           ("C-c y"   . get-id-as-link)
+           ;("C-c n y" . my/org-roam-copy-node-as-markdown-link)
+           )
+    :config
+    (org-roam-db-autosync-mode)
+    (cl-defmethod org-roam-node-parent-child-title ((node org-roam-node))
+      "Get the title of the parent node or an empty string if no parent is found."
+      (concat (my/get-full-node-title node) "@"))
+
+    (setq org-roam-node-display-template
+        (concat "${parent-child-title:*}"
+                (propertize "${tags:10}" 'face 'org-tag)))
+    <<org-roam-config>>
+    :custom
+    (org-roam-database-connector 'sqlite-builtin))
+#+END_SRC
+***** Org Roam Config
+:PROPERTIES:
+:header-args: :tangle no :exports none :noweb-ref org-roam-config
+:END:
+
+****** Helper Functions
+
+#+begin_src elisp
   (defun my/extract-org-id-from-link (link)
     "Extract the ID from an org-mode link."
     (when (string-match "\\[\\[id:\\(.*?\\)\\]\\[.*?\\]\\]" link)
@@ -246,7 +399,7 @@
             (my/get-node-parent-hierarchy parent nodes))
           nodes)))
 
-  (defun my/get-full-node-title (node )
+  (defun my/get-full-node-title (node)
     "Returns the title of the node prepended with its ancestor node titles."
     (mapconcat #'org-roam-node-title (my/get-node-parent-hierarchy node) ":"))
 
@@ -274,9 +427,56 @@
       (my/format-markdown-link headline-title "emacs" org-id)))
 #+end_src
 
-*** User Functions
+#+begin_src elisp
+  (defun org-get-buffer-title ()
+     (let* ((parsed (org-element-parse-buffer 'element))
+          (title (org-element-map parsed 'keyword
+                    (lambda (k)
+                      (when (string-equal (org-element-property :key k) "TITLE")
+                        (org-element-property :value k))))))
+     (when title
+       (if (interactive-p)
+           (message (car title)))
+       (car title))))
 
-#+begin_src elisp :noweb-ref org-roam-config
+  (defun get-current-headline-title()
+    (or (org-entry-get nil "ITEM") (car (cdr (car (org-collect-keywords '("title")))))))
+
+  (defun gsgx/org-roam-create-note-from-headline ()
+    "Create an Org-roam note from the current headline if it doesn't
+  exist without jumping to it"
+    (let* ((title (nth 4 (org-heading-components))))
+      ;; TODO: How can I just use the title without user input?
+      (node (org-roam-node-read title)))
+    (if (org-roam-node-file node)
+      (message "Skipping %s, node already exists" title)
+      ;; Without this the subsequent kills seem to be grouped together, not
+      ;; sure why
+      (kill-new "")
+      (org-cut-subtree)
+      (org-roam-capture- :node node)
+      (org-paste-subtree)
+      (kill-whole-line)
+      (org-capture-finalize nil)
+      ;; `org-map-entries' call continue from the right place
+      (setq org-map-continue-from
+          (org-element-property :begin (org-element-at-point)))))
+
+  (defun gsgx/org-roam-create-note-from-headlines ()
+    (interactive)
+    (if (region-active-p)
+        ;; `region-start-level' means we'll map over only headlines that are at
+        ;; the same level as the first headline in the region. This may or may not
+        ;; be what you want
+        (org-map-entries
+         'gsgx/org-roam-create-note-from-headline t 'region-start-level)
+      ;; If no region was selected, just create the note from the current headline
+      (gsgx/org-roam-create-note-from-headline)))
+#+end_src
+
+****** User Functions
+
+#+begin_src elisp
   (defun get-id-as-link ()
      "Retrieves the org-id of the current headline or note, formats it as a URI, and copies it to the kill-ring."
    (interactive)
@@ -310,41 +510,10 @@
         ))
 #+end_src
 
-*** Package Configuration
-#+BEGIN_SRC elisp :noweb yes
-  (use-package emacsql-sqlite-builtin :ensure t)
-  (use-package org-roam
-    :pin melpa
-    :ensure t
-    :after org
-    :after (org emacsql-sqlite-builtin)
-    :bind (("C-c n l" . org-roam-buffer-toggle)
-           ("C-c n f" . org-roam-node-find)
-           ("C-c n g" . org-roam-graph)
-           ("C-c n w" . org-roam-refile)
-           ("C-c n i" . org-roam-node-insert)
-           ("C-c n c" . org-capture)
-           ("C-c n j" . org-roam-dailies-capture-today)
-           ("C-c y"   . get-id-as-link)
-           ("C-c n y" . my/org-roam-copy-node-as-markdown-link))
-    :config
-    (org-roam-db-autosync-mode)
-    (cl-defmethod org-roam-node-parent-child-title ((node org-roam-node))
-      "Get the title of the parent node or an empty string if no parent is found."
-      (my/get-full-node-title node))
+**** Org-Agenda
+***** Org-Super-Agenda
 
-    (setq org-roam-node-display-template
-        (concat "${parent-child-title:*}"
-                (propertize "${tags:10}" 'face 'org-tag)))
-    <<org-roam-config>>
-    :custom
-    (org-roam-database-connector 'sqlite-builtin))
-#+END_SRC
-
-** Org-Agenda
-*** Org-Super-Agenda
-
-#+begin_src elisp :noweb-ref org-super-agenda-defun
+#+begin_src elisp :noweb-ref org-super-agenda-defun :tangle no
   (setq org-agenda-remove-file-column t)
   (setq org-super-agenda-header-prefix "📌 ")
   (setq org-agenda-prefix-format
@@ -363,19 +532,395 @@
     (org-super-agenda-mode 1)
     <<org-super-agenda-defun>>)
 #+end_src
+**** Org-node
+Provides org-id search functionality much faster than org-roams. 
 
-* Editing
-:PROPERTIES:
-:header-args: :noweb-ref emacs-ide
-:END:
-** LSP
-*** LSP-mode
-#+begin_src elisp
-(package-refresh-contents)
+#+begin_src elisp :noweb yes
+  (use-package org-node
+     :after org-roam
+     :config
+     <<org-node-functions>>
+     (org-node-cache-mode)
+     (setq org-node-alter-candidates t)
+     (setq org-node-affixation-fn #'my/org-node-title-affixation-fn)
+     :bind (("C-c n f" . org-node-find)
+            ("C-c n y" . my/org-node-copy-node-as-markdown-link)
+            ))
 #+end_src
 
-#+RESULTS:
+***** Utility Functions
+#+NAME: org-node-functions
+#+begin_src elisp :noweb rw :tangle no
+  (defun org-roam-node-to-org-node-node (node)
+    (when node
+      (my/org-roam-get-node-by-id (org-node-get-id node))))
 
+  (defun my/org-node-title-affixation-fn (node title)
+    (let ((roam-node (org-roam-node-to-org-node-node node)))
+      (if roam-node
+          (list (my/get-full-node-title roam-node) "" "@")
+        (list title "" ""))))
+
+  (defun my/org-node-copy-node-as-markdown-link ()
+       "Prompts the user to select a node which is copied to the kill ring as a customized link."
+       (interactive)
+       (let* ((node (org-roam-node-to-org-node-node (org-node-read)))
+              (node-link (my/get-node-markdown-link node)))
+         (org-kill-new node-link)))
+#+end_src
+
+**** Org-bullets 
+#+begin_src elisp
+  (use-package org-bullets
+    :ensure t
+    :hook (org-mode . org-bullets-mode)
+    :config
+    (setq org-bullets-bullet-list '("◉" "○" "✸" "✿" "▶"))
+    (setq org-ellipsis "⤵")
+    (setq org-hide-leading-stars t))
+#+end_src
+
+**** TODO nowebdit
+:PROPERTIES:
+:ID:       68B8966D-3EE7-48FE-B83F-52A8F224602D
+:PARENT:   [[id:6cacb474-009b-491c-a8fb-cb8b1121e47d][MineMacs]]
+:END:
+
+#+begin_src elisp
+  (require 'org-src)
+
+  (defun my/org-src-edit-in-buffer (block-name handler)
+    "Edit the named src-block in the background, apply changes, and kill the edit buffer."
+    (save-excursion
+      ;; Jump to the block
+      (when (org-babel-goto-named-src-block block-name)
+        (user-error "No source block found with name: %s" block-name))
+      (let* ((element (org-element-context))
+             (type (org-element-type element)))
+        (unless (eq type 'src-block)
+          (user-error "The element at point is not a src-block"))
+        (let ((edit-buf-name (format "*my-org-src-edit: %s*" block-name)))
+          ;; Override org-src-switch-to-buffer so it just `set-buffer`
+          ;; instead of showing in a window.
+          (cl-letf (((symbol-function 'org-src-switch-to-buffer)
+                     (lambda (buffer &optional _return-to-window)
+                       (set-buffer buffer))))   ;; <-- no window switch
+            (org-src--edit-element
+             element
+             edit-buf-name
+             (lambda ()
+               ;; The "initialize" function: choose major-mode for the block
+               (let ((lang (org-element-property :language element)))
+                 (if-let ((mode (cdr (assoc lang org-src-lang-modes))))
+                     (funcall mode)
+                   (fundamental-mode))))
+             t     ;; WRITE-BACK: non-nil => buffer contents will replace the block.
+             nil   ;; CONTENTS: nil => use org-src--contents-area
+             nil)) ;; REMOTE: nil => let Org attempt to preserve point/mark
+
+          ;; At this point, `org-src--edit-element` has created and populated
+          ;; the edit buffer, but we never actually displayed it.
+
+          (with-current-buffer edit-buf-name
+            (condition-case err
+                (funcall handler)
+              (error
+               (org-edit-src-abort)
+               (signal (car err) (cdr err))))
+            (org-edit-src-exit))))))
+#+end_src
+
+#+begin_src elisp
+  (defun my/org-src-set-content-via-backgroud-edit-buffer (src-name new-content)
+    (my/org-src-edit-in-buffer src-name
+                               (lambda ()
+                                 (delete-region (point-min) (point-max))
+                                 (insert (or new-content "")))))
+#+end_src
+
+#+begin_src elisp
+  (defun my/org-get-src-block (name &optional buffer)
+    (when name
+      (with-current-buffer (or buffer (current-buffer))
+        (let ((block (org-babel-lob--src-info name)))
+          (if block
+              block
+            (progn
+              (message "Could not find block with name %s" name)
+              nil))))))
+
+  (defun my/org-get-src-content (name &optional buffer)
+    "Get the content of the current Org source block (optionally in BUFFER) with indentation removed."
+    (when-let ((block (my/org-get-src-block name buffer)))
+      (message "Block: \n%S" block)
+      (or (nth 1 block) "")))
+      ;; NOTE: was using this, but it doesn't seem to include noweb blocks
+      ;; (org-babel-expand-noweb-references block)))
+
+  (defun my/org-get-src-header (name key &optional buffer)
+    (when (and name key)
+      (cdr (assoc key (nth 2 (my/org-get-src-block name buffer))))))
+
+  ;; (defun set-src-content (name new-content &optional buffer)
+  ;;   "Replace the content of the src-block with NAME with NEW-CONTENT."
+  ;;   (message "SETTING %s to: \n%s" name new-content)
+  ;;   (with-current-buffer (or buffer (current-buffer))
+  ;;     (message "SETTING content in %s" (buffer-name))
+  ;;     (save-excursion
+  ;;       (when (org-babel-goto-named-src-block name)
+  ;;         (let* ((element (org-element-at-point))
+  ;;                (begin (save-excursion
+  ;;                         (re-search-forward "^[ \t]*#\\+begin_src.*\n" nil t)
+  ;;                         (point)))
+  ;;                (end (org-element-property :end element)))
+  ;;           (delete-region begin (1- end))  ;; Remove old content
+  ;;           (insert new-content "\n"))))))   ;; Insert new content
+
+  (defun set-org-src-block-content (block-name new-content &optional buffer)
+    "Replace the contents of the org-mode src block named BLOCK-NAME with NEW-CONTENT.
+  If BUFFER is provided, operate on that buffer; otherwise, use the current buffer.
+  This function always ensures there is a newline immediately before the #+end_src marker."
+    (with-current-buffer (or buffer (current-buffer))
+      (save-excursion
+        ;; Jump to the named src block (this moves point to the #+NAME: line).
+        (org-babel-goto-named-src-block block-name)
+        ;; Search forward for the beginning marker.
+        (if (re-search-forward "^[ \t]*#\\+begin_src\\b" nil t)
+            (let ((content-start (progn
+                                   (forward-line 1)
+                                   (point))))
+              ;; Now search for the end marker.
+              (if (re-search-forward "^[ \t]*#\\+end_src\\b" nil t)
+                  (let ((content-end (progn
+                                       (end-of-line 0)
+                                       (point))))
+                    (goto-char content-start)
+                    (delete-region content-start content-end)
+                    (insert new-content)
+                    ;; Ensure there's a newline before the #+end_src marker.
+                    )
+                (message "Could not find the end of the src block for '%s'" block-name)))
+          (message "Could not find the beginning of the src block for '%s'" block-name)))))
+
+  (defun my-org-update-src-block (new-content)
+    "Replace the content of the current Org-mode src block with NEW-CONTENT."
+    (let* ((element (org-element-at-point)))
+      (when (eq (org-element-type element) 'src-block)
+        (let* ((begin (org-element-property :begin element))
+               (end (org-element-property :end element)))
+          (save-excursion
+            (goto-char begin)
+            (re-search-forward "^[ \t]*#\\+begin_src.*\n") ;; Move to the content start
+            (let ((content-start (point)))
+              (goto-char end)
+              (re-search-backward "^[ \t]*#\\+end_src" nil t)
+              (delete-region content-start (point)) ;; Clear old content
+              (insert (concat new-content "\n\n") "\n") ;; Insert new content
+              ))))))
+#+end_src
+
+#+begin_src elisp
+  (defun my/replace-text-at (text beg end new-text)
+    (concat (substring text 0 beg)
+            new-match-text
+            (substring text end)))
+
+  (defun append-newline-if-nonempty (str)
+    (if (and str (not (string-empty-p str))) 
+        (concat str "\n") 
+      str))
+
+  (defun my/expand-noweb (text origin-buffer &optional already-expanded-names match-start)
+    "Expand all Noweb references in TEXT by retrieving them from ORIGIN-BUFFER.
+  Returns the expanded string. Recursively expands references inside the inserted blocks."
+    ;;(message "Inputtext: \n%s" text)
+    ;; TODO: Matches all noweb syntax but only ^ is supported
+    (if (string-match (org-babel-noweb-wrap) text match-start)
+        ;; TODO: if these checks fail, probably throw 
+        (-when-let* ((src-name (match-string 1 text))
+                     (new-match-start (match-beginning 0))
+                     (new-match-end (match-end 0)))
+          (let ((src-content (my/org-get-src-content src-name origin-buffer)))
+            (if (or (not src-content)
+                    (memq src-name already-expanded-names)
+                    (not (string= "rw" 
+                                  (my/org-get-src-header src-name :noweb origin-buffer))))
+                (my/expand-noweb text origin-buffer already-expanded-names new-match-end)
+              (let* ((expanded-src-content (my/expand-noweb
+                                            src-content
+                                            origin-buffer
+                                            (append already-expanded-names (list src-name))))
+                     (new-match-text (concat "#+SRC_BEGIN_" src-name "\n"
+                                             (append-newline-if-nonempty expanded-src-content)
+                                             "#+SRC_END_" src-name))
+                     (new-text (my/replace-text-at text new-match-start new-match-end new-match-text)))
+                (my/expand-noweb
+                 new-text
+                 origin-buffer
+                 (append already-expanded-names (list src-name))
+                 new-match-start)))))
+      text))
+
+
+  (defun my-search-noweb-references (origin-buffer)
+    "Search for Noweb references in the current buffer and replace them with expanded content from ORIGIN-BUFFER."
+    (save-excursion
+      (goto-char (point-min))
+      ;; Grab the entire buffer as a string.
+      (let ((original-text (buffer-substring-no-properties (point-min) (point-max))))
+        ;; Expand the text using the helper function.
+        (let ((expanded-text (my/expand-noweb original-text origin-buffer)))
+          ;; Replace the current buffer contents with the expanded text.
+          (delete-region (point-min) (point-max))
+          (insert expanded-text)))))
+#+end_src
+
+#+begin_src elisp :noweb no
+  (defun my/src-comment-begin-regex (&optional src-name)
+    (if src-name
+        (concat "^[ \t]*#\\+SRC_BEGIN_" (regexp-quote src-name) ".*\n")
+      "^[ \t]*#\\+SRC_BEGIN_\\([^ \n]+\\).*\n"))
+
+  ;; TODO: should this start with \n? seems to work better if i don't check, but it should always have a newline before it...
+  (defun my/src-comment-end-regex (&optional src-name)
+    (if src-name
+        (concat "[ \t]*#\\+SRC_END_" (regexp-quote src-name))
+      "[ \t]*#\\+SRC_END_\\([^ \n]+\\)"))
+
+
+  (defun my/parse-src-blocks (text &optional existing-children)
+    "Internal helper returning a cons (BLOCKS . REPLACED-TEXT).
+  BLOCKS is a list of block structures.
+  REPLACED-TEXT is TEXT with recognized blocks replaced by <<NAME>>."
+    (if (string-match (my/src-comment-begin-regex) text)
+        (let* ((begin-pos   (match-beginning 0))
+               (after-begin (match-end 0))
+               (block-name  (match-string 1 text)))
+          (if (string-match (my/src-comment-end-regex block-name) text after-begin)
+              (progn
+                (let* ((end-pos   (match-beginning 0))
+                       (after-end (match-end 0))
+                       (body (substring text after-begin end-pos))
+                       (replaced-text
+                        (concat (substring text 0 begin-pos)
+                                "<<" block-name ">>"
+                                (substring text after-end)))
+                       (child-comment (my/parse-src-blocks body)))
+                  (my/parse-src-blocks replaced-text (append
+                                                      existing-children
+                                                      (list
+                                                       (list :name block-name
+                                                             :content (plist-get child-comment :content)
+                                                             :children (plist-get child-comment :children)))))))
+            (progn
+              (list :name nil ;; NOTE: nil because block was incomplete
+                    :content text
+                    :children existing-children))))
+      (progn
+       (list :name nil
+            :content text
+            :children existing-children))))
+#+end_src
+
+#+begin_src elisp
+  (defun my/get-org-src-edit-origin-buffer ()
+    "When in a org-src-edit buffer, return its src-block origin buffer if it exists."
+    (-when-let* ((marker org-src--beg-marker)
+                 (buf (marker-buffer marker)))
+      buf))
+
+  (defun my/get-src-block-info-from-edit-buffer ()
+    (when-let ((src-block-marker org-src--beg-marker)
+               (source-buffer (my/get-org-src-edit-origin-buffer)))
+      (with-current-buffer source-buffer
+        (goto-char src-block-marker)
+        (org-babel-get-src-block-info))))
+
+  (defun my/get-org-src-edit-header-arg (key)
+    ;; (message "Current buffer vars: %s" (buffer-local-variables))
+    (-if-let* ((babel-info (my/get-src-block-info-from-edit-buffer))
+               (header-alist (nth 2 babel-info))
+               (header-alist-item (assoc key header-alist))
+               (header-arg-value (cdr header-alist-item)))
+        header-arg-value
+      (message (concat "Could not find babel info in " (buffer-name)))))
+
+  (defun my/is-no-web-read-write ()
+    (when-let ((noweb-value (my/get-org-src-edit-header-arg :noweb)))
+      (string= noweb-value "rw")))
+
+  (defun my-org-src-edit-setup ()
+    "Replace all occurrences of 'foo' with 'foo' when the Org Src buffer opens."
+    (when (my/is-no-web-read-write)
+      (my-search-noweb-references (my/get-org-src-edit-origin-buffer))))
+
+  (add-hook 'org-src-mode-hook #'my-org-src-edit-setup)
+
+  (defun my/loop-children (children)
+      (dolist (child children)
+        (my/org-src-set-content-via-backgroud-edit-buffer (plist-get child :name) (plist-get child :content))
+        (when-let ((subchildren (plist-get child :children)))
+            (my/loop-children subchildren))))
+
+  (defun my/compress-noweb-references ()
+    "Search for Noweb references in the current buffer and replace them with expanded content from ORIGIN-BUFFER."
+    (save-excursion
+      (goto-char (point-min))
+      ;; Grab the entire buffer as a string.
+      (let ((original-text (buffer-substring-no-properties (point-min) (point-max))))
+        ;; Expand the text using the helper function.
+        (let ((src-comment (my/parse-src-blocks original-text)))
+          ;; Replace the current buffer contents with the expanded text.
+          (delete-region (point-min) (point-max))
+          (with-current-buffer (my/get-org-src-edit-origin-buffer)
+            (my/loop-children (plist-get src-comment :children)))
+          (insert (plist-get src-comment :content))))))
+
+  (defun my-org-src-exit-advice (&optional save)
+    "Replace all occurrences of 'foo' back to 'foo' before returning to the Org buffer."
+    (message "ARGS: %S" org-src--allow-write-back)
+    (when (and
+           org-src--allow-write-back
+           (my/is-no-web-read-write))
+      (my/compress-noweb-references)))
+
+  ;;(advice-add 'org-edit-src-save :before #'my-org-src-save-advice)
+  ;;(advice-remove 'org-edit-src-save  #'my-org-src-save-advice)
+
+
+
+  ;; TODO: this hok runs even if abort is ran... how cna I tell?
+  (advice-add 'org-edit-src-exit :before #'my-org-src-exit-advice)
+  ;;(advice-remove 'org-edit-src-exit #'my-org-src-exit-advice)
+#+end_src
+
+#+begin_src elisp
+  ;; TODO: Finish
+
+  ;; TODO: This one I don't recall is for ob-ts-node
+  ;; (org-babel-do-load-languages
+  ;;  'org-babel-load-languages
+  ;;  '((typescript . t))) ;; Enable TypeScript
+
+  ;; (setq org-babel-typescript-command "npx -p ts-node -- ts-node")
+
+  ;; (use-package quelpa
+  ;;   :ensure t)
+
+  ;; (use-package ob-ts-node
+  ;;   :quelpa
+  ;;   (ob-ts-node :repo "tmythicator/ob-ts-node"
+  ;;               :fetcher github))
+
+  ;; (quelpa '(ob-ts-node :repo "tmythicator/ob-ts-node" :fetcher github))
+
+  ;; (org-babel-do-load-languages
+  ;;  'org-babel-load-languages
+  ;;  '((ts-node . t)
+  ;;    ))
+#+end_src
+
+*** LSP-mode
 #+begin_src elisp
   (use-package helm
      :ensure t
@@ -393,48 +938,47 @@
      :map helm-map
             ([escape] . helm-keyboard-quit))
      :config
-   (helm-mode 1))
+     (helm-mode 1))
 
   (use-package dap-mode
-  ;; Uncomment the config below if you want all UI panes to be hidden by default!
-  ;; :custom
-  ;; (lsp-enable-dap-auto-configure nil)
-  ;; :config
-  ;; (dap-ui-mode 1)
-   :ensure t
-   :config
-   (require 'dap-node)
-   (dap-node-setup)) ;; Automatically installs Node debug adapter if needed
+    :ensure t
+    :after dap-node
+    ;; Uncomment the config below if you want all UI panes to be hidden by default!
+    ;; :custom
+    ;; (lsp-enable-dap-auto-configure nil)
+    ;; :config
+    ;; (dap-ui-mode 1)
+    )
 
   (use-package lsp-mode
-   :ensure t
-   :hook ((js2-mode typescript-mode) . lsp)
-   :commands lsp)
-
-
-  (dw/leader-key-def
-   "l"  '(:which-key "lsp")
-   "ld" 'xref-find-definitions
-   "lr" 'xref-find-references
-   "lvr" 'lsp-rename
-   "lir" 'lsp-ui-peek-find-references
-   "ln" 'lsp-ui-find-next-reference
-   "lp" 'lsp-ui-find-prev-reference
-   "ls" 'counsel-imenu
-   "le" 'lsp-ui-flycheck-list
-   "lS" 'lsp-ui-sideline-mode
-   "lx" 'lsp-extend-selection
-   "lX" 'lsp-execute-code-action)
+    :ensure t
+    :hook ((js2-mode typescript-mode) . lsp)
+    :commands lsp
+    :config
+    (dw/leader-key-def
+      "l"  '(:which-key "lsp")
+      "ld" 'xref-find-definitions
+      "lr" 'xref-find-references
+      "lvr" 'lsp-rename
+      "lir" 'lsp-ui-peek-find-references
+      "ln" 'lsp-ui-find-next-reference
+      "lp" 'lsp-ui-find-prev-reference
+      "ls" 'counsel-imenu
+      "le" 'lsp-ui-flycheck-list
+      "lS" 'lsp-ui-sideline-mode
+      "lx" 'lsp-extend-selection
+      "lX" 'lsp-execute-code-action))
 
   (use-package lsp-ui
-   :ensure t
-   :commands lsp-ui-mode
-   :hook (lsp-mode . lsp-ui-mode)
-   :config
-   (setq lsp-ui-sideline-enable t)
-   (setq lsp-ui-sideline-show-hover nil)
-   (setq lsp-ui-doc-position 'bottom)
-   (lsp-ui-doc-show))
+    :after lsp-mode
+    :ensure t
+    :commands lsp-ui-mode
+    :hook (lsp-mode . lsp-ui-mode)
+    :config
+    (setq lsp-ui-sideline-enable t)
+    (setq lsp-ui-sideline-show-hover nil)
+    (setq lsp-ui-doc-position 'bottom)
+    (lsp-ui-doc-show))
 
   (use-package helm-lsp
     :ensure t
@@ -444,46 +988,26 @@
     :ensure t
     :commands lsp-treemacs-errors-list)
 
-  (use-package dap-node
-    :ensure t)
-
   (use-package which-key
-   :ensure t
-   :config
-   (which-key-mode))
+    :ensure t
+    :config
+    (which-key-mode))
 
   (use-package company
-   :ensure t
-   :config
-   (setq company-idle-delay 0)
-   (global-company-mode 1))
+    :ensure t
+    :config
+    (setq company-idle-delay 0)
+    (global-company-mode 1))
 
   (use-package flycheck
-   :ensure t
-   :init (global-flycheck-mode)
-   :hook (lsp-mode . flycheck-mode)
-   :config
-   (setq flycheck-check-syntax-automatically '(mode-enabled save)))
-
-
-#+end_src
-*** COMMENT Eglot 
-#+begin_src elisp
-  (use-package project
-    :ensure t)
-
-  (use-package eglot
-    :ensure t)
-
-  (use-package orderless
     :ensure t
-    :demand t
+    :init (global-flycheck-mode)
+    :hook (lsp-mode . flycheck-mode)
     :config
-    (setq completion-styles '(orderless flex)
-          completion-category-overrides '((eglot (styles . (orderless flex))))))
+    (setq flycheck-check-syntax-automatically '(mode-enabled save)))
+
 
 #+end_src
-
 *** Clojure(Script) 
 #+begin_src elisp
   (use-package cider
@@ -493,7 +1017,6 @@
     (evil-collection-cider-setup))
 
 #+end_src
-** Language Integrations 
 *** JavaScript/TypeScript
 #+begin_src elisp
   (defun dw/set-js-indentation ()
@@ -573,78 +1096,6 @@ add package runtfmt
             ("\\.markdown\\'" . markdown-mode))
      :init (setq markdown-command "pandoc"))
 #+end_src
-*** Org-mode
-
-#+begin_src elisp
-  (defun dw/org-mode-setup ()
-     (org-indent-mode)
-  ;;(variable-pitch-mode 1)
-  ;;(auto-fill-mode 0)                                                         
-   (visual-line-mode 1)
-   (setq evil-auto-indent t))
-
-  (use-package org
-   :config
-   (dw/leader-key-def
-    "c"  '(:which-key "Copy")
-    "cl"  'org-store-link
-    "cj" 'org-babel-next-src-block
-    "ck" 'org-babel-previous-src-block))
-
-  (use-package org-mode
-   :hook (org-mode . dw/org-mode-setup)
-   :config
-   (setq org-log-into-drawer t)
-   (setq org-agenda-files
-       (seq-filter (lambda (file)
-                    (not (string-match-p "/\\.#" file)))
-                   (directory-files-recursively "~/Knowledgebase/" "\\.org$"))))
-
-
-  (use-package toc-org
-    :ensure t
-    :hook (org-mode . toc-org-mode))
-
-
-  (use-package doct 
-   :ensure t
-   :commands (doct))
-
-  (setq org-agenda-custom-commands
-   '(("w" "Work"
-       ((tags-todo "work")))))
-
-
-  (setq org-agenda-custom-commands
-   '(("w" "Weekly Work Schedule"
-       agenda ""
-       ((org-agenda-span 'week)
-        (org-agenda-start-on-weekday 0) ;; Start on Sunday
-        (org-agenda-skip-function
-            '(org-agenda-skip-entry-if 'notregexp "^\\*+.*:work:"))
-        (org-agenda-skip-function
-            '(org-agenda-skip-entry-if 'notdeadline 'notscheduled))))))
-#+end_src
-
-#+RESULTS:
-
-#+begin_src elisp
-  (use-package org-edna
-     :ensure t
-     :hook
-     (org-mode . org-edna-mode)
-     :config
-     (setq org-edna-use-inheritance t)
-     (org-edna-load)
-     ;; define a function to process the current Org entry for Edna properties
-     (defun my/org-process-edna (&rest args)
-         "Process the current Org entry for Edna properties."
-      (when (org-entry-get nil "TRIGGER")
-       (org-edna-process-current-entry)))
-     ;; add the function to the org-trigger-hook and org-after-todo-state-change-hook
-     (add-hook 'org-trigger-hook #'my/org-process-edna)
-     (add-hook 'org-after-todo-state-change-hook #'my/org-process-edna))
-#+end_src
 *** JSON
 #+begin_src elisp
   (use-package json-mode
@@ -664,7 +1115,6 @@ add package runtfmt
     :config
     (setq inferior-lisp-program "sbcl")) 
 #+end_src
-
 ** Automatic Formatting
 #+begin_src elisp
   (use-package apheleia
@@ -715,7 +1165,7 @@ add package runtfmt
   ;;   :config
   ;;   (lispyville-set-key-theme '(operators c-w additional)))
 
-  (use-package paraedit
+  (use-package paredit
     :ensure t)
 #+end_src
 
@@ -753,13 +1203,10 @@ add package runtfmt
 #+end_src
 
 * Applications
-:PROPERTIES:
-:header-args: :noweb-ref emacs-applications
-:END:
 ** Notmuch
 #+begin_src elisp
-(use-package notmuch
-:ensure t)
+  (use-package notmuch
+    :ensure t)
 #+end_src
 
 #+begin_src elisp
@@ -771,6 +1218,7 @@ add package runtfmt
    "Visit the notmuch message or thread with id ID."
    (notmuch-show id))
 
+  ;; FIXME: Console complains about quotes here
   (defun org-notmuch-store-link ()
      "Store a link to a notmuch mail message."
      (cl-case major-mode
@@ -871,9 +1319,6 @@ add package runtfmt
 #+end_src
 
 * Utility 
-:PROPERTIES:
-:header-args: :noweb-ref emacs-utility
-:END:
 ** Cache Files
 Get cache files outta my project tree!
 
@@ -917,6 +1362,50 @@ Get cache files outta my project tree!
   (org-babel-tmux-terminal "kitty")
   (org-babel-tmux-terminal-opts '("-T" "ob-tmux" "-e")))
 #+end_src
+* Misc. 
+** Load Custom.el
+#+begin_src elisp
+  (setq custom-file (expand-file-name "custom.el"
+                      user-emacs-directory))
+
+  (when (file-exists-p custom-file)
+    (load custom-file))
+#+end_src
+
+** Theme
+Load after custom.el so it remembers your confirmation to load the the theme. 
+
+#+begin_src elisp :noweb-ref emacs-theme
+  (use-package modus-themes
+   :ensure t
+   :config
+   (setq modus-themes-org-blocks 'grey-background
+         modus-themes-bold-constructs nil)
+   (setq modus-themes-common-palette-overrides
+         modus-themes-preset-overrides-intense)
+   (load-theme 'modus-vivendi)
+   (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
+#+end_src
+
+** TODO Misc
+#+begin_src elisp
+  (use-package hyperbole
+     :ensure t
+     :config
+     ;; Set the location of the Hyperbole Info files
+     (setq Info-default-directory-list
+           (cons (expand-file-name "info" user-emacs-directory)
+                  Info-default-directory-list)))
+
+  (defun send-to-eshell-remote (command)
+   (let ((buf (get-buffer-create "eshell-remote")))
+    (with-current-buffer buf
+     (unless (eq major-mode 'eshell-mode)
+      (eshell-mode))
+     (goto-char (point-max))
+     (insert command)
+     (eshell-send-input))))
+#+end_src
 
 * Meta
 ** Setup
@@ -933,121 +1422,4 @@ vterm needs CMake to be compiled
 :version:  latest
 :END:
 And cmake appears to require make
-** Package Management
-#+begin_src elisp :noweb-ref emacs-package-management
-  (require 'package)
-
-  ;; (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-  ;;                          ("melpa-stable" . "https://stable.melpa.org/packages/")
-  ;;                          ("org" . "https://orgmode.org/elpa/")
-  ;;                          ("elpa" . "https://elpa.gnu.org/packages/")))
-
-  (unless (package-installed-p 'use-package)
-    (package-install 'use-package))
-
-  (require 'use-package)
-
-#+end_src
-
-** Export
-#+NAME: load-custom.el
-#+begin_src elisp
-  (setq custom-file "~/.config/crafted-emacs/custom.el")
-  (load custom-file)
-#+end_src
-
-#+begin_src elisp :tangle ~/.config/crafted-emacs/config.el 
-  <<emacs-package-management>>
-  (require 'crafted-defaults)    ; Sensible default settings for Emacs
-  (require 'crafted-evil)        ; An `evil-mode` configuration
-
-  (add-hook 'emacs-startup-hook
-      (lambda ()
-          (custom-set-faces
-           `(default ((t (:font "JetBrainsMono Nerd Font"))))
-           `(fixed-pitch ((t (:inherit (default)))))
-           `(fixed-pitch-serif ((t (:inherit (default)))))
-            `(variable-pitch ((t (:font "Fira Sans")))))))
-
-  <<emacs-hotkeys>>
-
-  ;; ----------------------
-  ;; Keep custom.el enabled
-  ;; ----------------------
-  (setq crafted-load-custom-file t)
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Writting Environment ;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-  (use-package ispell
-   :init
-   (setq ispell-dictionary "en_US")
-   (setq ispell-program-name "aspell")
-   (setq ispell-silently-savep t))
-
-  (use-package flymake-aspell
-    :ensure t
-    :after flymake
-    :hook
-    ((text-mode org-mode yaml-mode markdown-mode git-commit-mode) . flymake-aspell-setup))
-
-  (define-key minibuffer-local-map (kbd "C-v") 'yank)
-
-  ;;;;;;;;;;;;;;;;;;
-  ;; ;; Hyperbole ;;
-  ;;;;;;;;;;;;;;;;;;
-
-  (use-package hyperbole
-     :ensure t
-     :config
-     ;; Set the location of the Hyperbole Info files
-     (setq Info-default-directory-list
-           (cons (expand-file-name "info" user-emacs-directory)
-                  Info-default-directory-list)))
-
-  <<emacs-structured-notes>>
-
-  <<emacs-ide>>
-
-  <<project-management>>
-
-  <<emacs-utility>>
-
-  ;;;;;;;;;;;;;;;
-  ;; Functions ;;
-  ;;;;;;;;;;;;;;;
-
-  (defun send-to-eshell-remote (command)
-   (let ((buf (get-buffer-create "eshell-remote")))
-    (with-current-buffer buf
-     (unless (eq major-mode 'eshell-mode)
-      (eshell-mode))
-     (goto-char (point-max))
-     (insert command)
-     (eshell-send-input))))
-
-
-  <<load-custom.el>>
-
-  <<emacs-theme>>
-
-  <<emacs-applications>>
-
-  ;;;;;;;;;;;;;;;
-  ;; Load last ;;
-  ;;;;;;;;;;;;;;;
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; ;; Project Based Environment Variables ;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  (use-package envrc
-   :ensure t
-  ;;:after (flycheck) ; or other minor modes you want to load before envrc
-   :config
-   (envrc-global-mode))
-  ;;(with-eval-after-load 'envrc
-  ;;  (define-key envrc-mode-map (kbd "C-c e") 'envrc-command-map))
-
-#+end_src
 
