@@ -137,7 +137,7 @@ Some sane defaults copied from crafted-emacs.
     :config
     (general-evil-setup t)
     (general-create-definer dw/leader-key-def
-      :keymaps '(normal insert visual emacs)
+      :keymaps '(normal emacs)
       :prefix "SPC"
       :global-prefix "C-SPC")
     (general-create-definer dw/ctrl-c-keys
@@ -282,6 +282,8 @@ Some sane defaults copied from crafted-emacs.
      (add-hook 'org-after-todo-state-change-hook #'my/org-process-edna))
 #+end_src
 **** Org-Roam
+Slowly migrating away from org-roam to org-node.
+
 ***** Package Configuration
 #+BEGIN_SRC elisp :noweb yes
   (use-package org-roam
@@ -294,8 +296,8 @@ Some sane defaults copied from crafted-emacs.
            ("C-c n i" . org-roam-node-insert)
            ("C-c n c" . org-capture)
            ("C-c n j" . org-roam-dailies-capture-today)
-           ("C-c y"   . get-id-as-link)
-           ;("C-c n y" . my/org-roam-copy-node-as-markdown-link)
+           ;; ("C-c y"   . get-id-as-link)
+           ;; ("C-c n y" . my/org-roam-copy-node-as-markdown-link)
            )
     :config
     (org-roam-db-autosync-mode)
@@ -518,20 +520,56 @@ Provides org-id search functionality much faster than org-roams.
      :after org-roam
      :config
      <<org-node-functions>>
+     <<org-node-interactive>>
      (org-node-cache-mode)
      (setq org-node-alter-candidates t)
      (setq org-node-affixation-fn #'my/org-node-title-affixation-fn)
-     :bind (("C-c n f" . org-node-find)
-            ("C-c n y" . my/org-node-copy-node-as-markdown-link)
-            ))
+     <<org-node-hotkeys>>)
+
+  (use-package org-node-fakeroam
+    :after org-node
+    :defer
+    :config
+    (setq org-roam-link-auto-replace nil)
+    (setq org-roam-db-update-on-save nil)
+    (org-node-fakeroam-redisplay-mode)
+    (org-node-fakeroam-jit-backlinks-mode)
+    ;; NOTE: roam-db needs to be updated for parent links
+    (org-node-fakeroam-db-feed-mode))
+#+end_src
+
+***** KeyMaps
+#+NAME: org-node-hotkeys
+#+begin_src elisp :noweb yes :tangle no
+  (dw/leader-key-def
+    "nu" #'get-id-as-link
+    "ny" #'my/org-node-copy-node-as-markdown-link
+    "nf" #'org-node-find
+    "np" #'my/org-node-set-parent)
 #+end_src
 
 ***** Utility Functions
 #+NAME: org-node-functions
 #+begin_src elisp :noweb rw :tangle no
+  ;;; my/org-node ---
+
   (defun org-roam-node-to-org-node-node (node)
     (when node
       (my/org-roam-get-node-by-id (org-node-get-id node))))
+
+  (defun my/org-node-get-node-markdown-link (node)
+    "Return a markdown link to the ID of a node titled with the nodes full parent path."
+    (when-let ((roam-node (org-roam-node-to-org-node-node node)))
+      (my/format-markdown-link (my/get-shorthand-node-title roam-node) "emacs" (org-mem-entry-id node))))
+
+  (defun my/org-node-get-id-as-link ()
+    "Retrieves the org-id of the current headline or note, formats it as a URI, and copies it to the kll-ring."
+    ((interactive))
+    (let* ((org-id (org-id-get nil 'create))
+           (node (org-mem-entry-by-id org-id)))
+      (if node
+          (org-kill-new (my/org-node-get-node-markdown-link node))
+      (org-kill-new (my/create-org-id-markdown-link org-id)))))
 
   (defun my/org-node-title-affixation-fn (node title)
     (let ((roam-node (org-roam-node-to-org-node-node node)))
@@ -545,6 +583,20 @@ Provides org-id search functionality much faster than org-roams.
        (let* ((node (org-roam-node-to-org-node-node (org-node-read)))
               (node-link (my/get-node-markdown-link node)))
          (org-kill-new node-link)))
+#+end_src
+
+***** Interactive Functions
+#+NAME: org-node-interactive
+#+begin_src elisp
+  (defun my/org-node-set-parent ()
+    "Find an org-node and add its ID as the parent_id to the current headline."
+    (interactive)
+    (let* ((node (org-node-read))
+           (node-id (org-node-get-id node))
+           (node-title (org-node-get-title node))
+           (link (format "[[id:%s][%s]]" node-id node-title)))
+      (org-entry-put (point) "PARENT" link)))
+
 #+end_src
 
 **** Org-Agenda
@@ -588,7 +640,7 @@ Provides org-id search functionality much faster than org-roams.
 
 #+begin_src elisp
   (require 'org-src)
-
+  (require 'dash)
   (defun my/org-src-edit-in-buffer (block-name handler)
     "Edit the named src-block in the background, apply changes, and kill the edit buffer."
     (save-excursion
