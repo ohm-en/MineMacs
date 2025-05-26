@@ -631,7 +631,13 @@ Provides org-id search functionality much faster than org-roams.
     (setq org-ellipsis "⤵")
     (setq org-hide-leading-stars t))
 #+end_src
-
+**** ox-hugo
+#+begin_src elisp
+  (use-package ox-hugo
+    :ensure t
+    :pin melpa
+    :after ox)
+#+end_src
 **** TODO nowebdit
 :PROPERTIES:
 :ID:       68B8966D-3EE7-48FE-B83F-52A8F224602D
