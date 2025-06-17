@@ -57,6 +57,11 @@ Some sane defaults copied from crafted-emacs.
 
   ;; Enable savehist-mode for command history
   (savehist-mode 1)
+
+
+  ;; To use the system clipboard for copy/paste
+  (setq select-enable-clipboard t)
+  (setq select-enable-primary t)
 #+end_src
 
 ** Default UI
@@ -83,66 +88,167 @@ Some sane defaults copied from crafted-emacs.
 #+end_src
 
 ** General Keybindings
-*** EVIL Mode
+
+*** COMMENT EVIL Mode
+Migrating to meow-mode. Leaving this until it's done.
+
 #+begin_src elisp
 
-  (use-package evil
-    :ensure t
-    :init
-    (customize-set-variable 'evil-want-integration t)
-    (customize-set-variable 'evil-want-keybinding nil)
-    (customize-set-variable 'evil-want-C-i-jump nil)
-    (customize-set-variable 'evil-respect-visual-line-mode t)
-    (customize-set-variable 'evil-undo-system 'undo-redo)
-    ;; TODO: Do I want these?
-    ;; (customize-set-variable 'evil-want-C-i-jump t)
-    ;; (customize-set-variable 'evil-want-Y-yank-to-eol t)
-    ;; (customize-set-variable 'evil-want-fine-undo t))
-    :config
-    (evil-mode 1)
-    (setq evil-auto-indent t)
-    ;; Make evil search more like vim
-    (evil-select-search-module 'evil-search-module 'evil-search)
-    ;; Make C-g revert to normal state
-    (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
-    ;; Rebind `universal-argument' to 'C-M-u' since 'C-u' now scrolls the buffer
-    (global-set-key (kbd "C-M-u") 'universal-argument)
-    ;; Use visual line motions even ouside of visual-line-mode buffers
-    (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-    (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
-    ;; Make sure some modes start in Emacs state
-    (dolist (mode '(custom-mode
-                    eshell-mode
-                    term-mode))
-      (add-to-list 'evil-emacs-state-modes mode)))
+  ;; (use-package evil
+  ;;   :ensure t
+  ;;   :init
+  ;;   (customize-set-variable 'evil-want-integration t)
+  ;;   (customize-set-variable 'evil-want-keybinding nil)
+  ;;   (customize-set-variable 'evil-want-C-i-jump nil)
+  ;;   (customize-set-variable 'evil-respect-visual-line-mode t)
+  ;;   (customize-set-variable 'evil-undo-system 'undo-redo)
+  ;;   ;; TODO: Do I want these?
+  ;;   ;; (customize-set-variable 'evil-want-C-i-jump t)
+  ;;   ;; (customize-set-variable 'evil-want-Y-yank-to-eol t)
+  ;;   ;; (customize-set-variable 'evil-want-fine-undo t))
+  ;;   :config
+  ;;   (evil-mode 1)
+  ;;   (setq evil-auto-indent t)
+  ;;   ;; Make evil search more like vim
+  ;;   (evil-select-search-module 'evil-search-module 'evil-search)
+  ;;   ;; Make C-g revert to normal state
+  ;;   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+  ;;   ;; Rebind `universal-argument' to 'C-M-u' since 'C-u' now scrolls the buffer
+  ;;   (global-set-key (kbd "C-M-u") 'universal-argument)
+  ;;   ;; Use visual line motions even ouside of visual-line-mode buffers
+  ;;   (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  ;;   (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+  ;;   ;; Make sure some modes start in Emacs state
+  ;;   (dolist (mode '(custom-mode
+  ;;                   eshell-mode
+  ;;                   term-mode))
+  ;;     (add-to-list 'evil-emacs-state-modes mode)))
 
-  (use-package evil-nerd-commenter
-    :requires evil
-    :ensure t
-    :config
-    ;; Enables Evil Nerd Commenter
-    (evilnc-default-hotkeys))
+  ;; (use-package evil-nerd-commenter
+  ;;   :requires evil
+  ;;   :ensure t
+  ;;   :config
+  ;;   ;; Enables Evil Nerd Commenter
+  ;;   (evilnc-default-hotkeys))
 
-  (use-package evil-collection
-    :requires evil
-    :ensure t
-    :config
-    (evil-collection-init))
+  ;; (use-package evil-collection
+  ;;   :requires evil
+  ;;   :ensure t
+  ;;   :config
+  ;;   (evil-collection-init))
 #+end_src
 
-*** Leader Key
+*** Meow-Mode
+Modal editing for default emacs keybindings.
+
+#+begin_src elisp
+  (use-package meow
+    :config 
+    ;; NOTE: default QWERTY setup (found here: https://github.com/meow-edit/meow/blob/master/KEYBINDING_QWERTY.org)
+    (defun meow-setup ()
+      (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
+      ;; NOTE: meow-motion-define-key, as shown in example, didn't exist. meow-motion-overwrite-define-key appears to be its replacement
+      (meow-motion-overwrite-define-key
+       '("j" . meow-next)
+       '("k" . meow-prev)
+       '("<escape>" . ignore))
+      (meow-leader-define-key
+       ;; Use SPC (0-9) for digit arguments.
+       '("1" . meow-digit-argument)
+       '("2" . meow-digit-argument)
+       '("3" . meow-digit-argument)
+       '("4" . meow-digit-argument)
+       '("5" . meow-digit-argument)
+       '("6" . meow-digit-argument)
+       '("7" . meow-digit-argument)
+       '("8" . meow-digit-argument)
+       '("9" . meow-digit-argument)
+       '("0" . meow-digit-argument)
+       '("/" . meow-keypad-describe-key)
+       '("?" . meow-cheatsheet))
+      (meow-normal-define-key
+       '("0" . meow-expand-0)
+       '("9" . meow-expand-9)
+       '("8" . meow-expand-8)
+       '("7" . meow-expand-7)
+       '("6" . meow-expand-6)
+       '("5" . meow-expand-5)
+       '("4" . meow-expand-4)
+       '("3" . meow-expand-3)
+       '("2" . meow-expand-2)
+       '("1" . meow-expand-1)
+       '("-" . negative-argument)
+       '(";" . meow-reverse)
+       '("," . meow-inner-of-thing)
+       '("." . meow-bounds-of-thing)
+       '("[" . meow-beginning-of-thing)
+       '("]" . meow-end-of-thing)
+       '("a" . meow-append)
+       '("A" . meow-open-below)
+       '("b" . meow-back-word)
+       '("B" . meow-back-symbol)
+       '("c" . meow-change)
+       '("d" . meow-delete)
+       '("D" . meow-backward-delete)
+       '("e" . meow-next-word)
+       '("E" . meow-next-symbol)
+       '("f" . meow-find)
+       '("g" . meow-cancel-selection)
+       '("G" . meow-grab)
+       '("h" . meow-left)
+       '("H" . meow-left-expand)
+       '("i" . meow-insert)
+       '("I" . meow-open-above)
+       '("j" . meow-next)
+       '("J" . meow-next-expand)
+       '("k" . meow-prev)
+       '("K" . meow-prev-expand)
+       '("l" . meow-right)
+       '("L" . meow-right-expand)
+       '("m" . meow-join)
+       '("n" . meow-search)
+       '("o" . meow-block)
+       '("O" . meow-to-block)
+       '("p" . meow-yank)
+       '("q" . meow-quit)
+       '("Q" . meow-goto-line)
+       '("r" . meow-replace)
+       '("R" . meow-swap-grab)
+       '("s" . meow-kill)
+       '("t" . meow-till)
+       '("u" . meow-undo)
+       '("U" . meow-undo-in-selection)
+       '("v" . meow-visit)
+       '("w" . meow-mark-word)
+       '("W" . meow-mark-symbol)
+       '("x" . meow-line)
+       '("X" . meow-goto-line)
+       '("y" . meow-save)
+       '("Y" . meow-sync-grab)
+       '("z" . meow-pop-selection)
+       '("'" . repeat)
+       '("<escape>" . ignore)))
+
+    (meow-setup)
+    (meow-global-mode 1))
+#+end_src
+
+*** COMMENT Leader Key
+Actively being replaced by meow-mode.
+
 #+begin_src elisp :noweb-ref emacs-hotkeys
   (use-package general
     :ensure t
-    :config
-    (general-evil-setup t)
-    (general-create-definer dw/leader-key-def
-      :keymaps '(normal emacs)
-      :prefix "SPC"
-      :global-prefix "C-SPC")
-    (general-create-definer dw/ctrl-c-keys
-      :prefix "C-c")
-    (global-set-key (kbd "C-x b") 'consult-buffer))
+    ;; :config
+    ;; (general-evil-setup t)
+    ;; (general-create-definer dw/leader-key-def
+    ;;   :keymaps '(normal emacs)
+    ;;   :prefix "SPC"
+    ;;   :global-prefix "C-SPC")
+    ;; (general-create-definer dw/ctrl-c-keys
+    ;;   :prefix "C-c")
+    ;; (global-set-key (kbd "C-x b") 'consult-buffer)
+    )
 #+end_src
 
 *** MacOS Bindings
@@ -189,26 +295,9 @@ Some sane defaults copied from crafted-emacs.
 #+begin_src elisp 
   (use-package projectile
     :ensure t
-    :init
-    (projectile-mode +1))
-
-  (dw/leader-key-def
-    "SPC" 'projectile-find-file)
-
-  (dw/leader-key-def
-      "p" '(:ignore t :which-key "projectile")
-      "pp" '(projectile-persp-switch-project :which-key "switch project")
-      "pf" '(projectile-find-file :which-key "find file")
-      "ps" '(projectile-grep :which-key "search in project")
-      "pr" '(projectile-recentf :which-key "recent files")
-      "pt" '(projectile-test-project :which-key "test project")
-      "pc" '(projectile-compile-project :which-key "compile project")
-      "pa" '(projectile-run-project :which-key "run project")
-      "pi" '(projectile-invalidate-cache :which-key "invalidate cache")
-      "pk" '(projectile-kill-buffers :which-key "kill project buffers")
-      "pd" '(projectile-remove-known-project :which-key "remove known project")
-      "pA" '(projectile-add-known-project :which-key "add known project")
-      "pl" '(projectile-list-projects :which-key "list projects"))
+    :config
+    (projectile-mode +1)
+    (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
 #+end_src
 
 *** envrc
@@ -246,12 +335,14 @@ Some sane defaults copied from crafted-emacs.
    :config
    (setq org-startup-indented t)
    (setq org-log-into-drawer t)
-   (dw/leader-key-def
-    "c"  '(:which-key "Copy")
-    "cl" 'org-store-link
-    "ct" 'org-time-stamp-inactive
-    "cj" 'org-babel-next-src-block
-    "ck" 'org-babel-previous-src-block))
+   ;; NOTE: C-c c is already mapped, find a new keybinding for use in meow-mode
+   ;; (dw/leader-key-def
+   ;;  "c"  '(:which-key "Copy")
+   ;;  "cl" 'org-store-link
+   ;;  "ct" 'org-time-stamp-inactive
+   ;;  "cj" 'org-babel-next-src-block
+   ;;  "ck" 'org-babel-previous-src-block)
+   )
 
 
   (use-package toc-org
@@ -524,7 +615,8 @@ Provides org-id search functionality much faster than org-roams.
      (org-node-cache-mode)
      (setq org-node-alter-candidates t)
      (setq org-node-affixation-fn #'my/org-node-title-affixation-fn)
-     <<org-node-hotkeys>>)
+     <<org-node-hotkeys>>
+     )
 
   (use-package org-node-fakeroam
     :after org-node
@@ -541,11 +633,14 @@ Provides org-id search functionality much faster than org-roams.
 ***** KeyMaps
 #+NAME: org-node-hotkeys
 #+begin_src elisp :noweb yes :tangle no
-  (dw/leader-key-def
-    "nu" #'get-id-as-link
-    "ny" #'my/org-node-copy-node-as-markdown-link
-    "nf" #'org-node-find
-    "np" #'my/org-node-set-parent)
+  (defvar-keymap my-org-node-prefix-map
+    :doc "Keymap for org-node related commands under C-n"
+    "u" #'get-id-as-link
+    "y" #'my/org-node-copy-node-as-markdown-link
+    "f" #'org-node-find
+    "p" #'my/org-node-set-parent)
+
+  (define-key global-map (kbd "C-c n") my-org-node-prefix-map)
 #+end_src
 
 ***** Utility Functions
@@ -1013,19 +1108,20 @@ Provides org-id search functionality much faster than org-roams.
     :hook ((js2-mode typescript-mode) . lsp)
     :commands lsp
     :config
-    (dw/leader-key-def
-      "l"  '(:which-key "lsp")
-      "ld" 'xref-find-definitions
-      "lr" 'xref-find-references
-      "lvr" 'lsp-rename
-      "lir" 'lsp-ui-peek-find-references
-      "ln" 'lsp-ui-find-next-reference
-      "lp" 'lsp-ui-find-prev-reference
-      "ls" 'counsel-imenu
-      "le" 'lsp-ui-flycheck-list
-      "lS" 'lsp-ui-sideline-mode
-      "lx" 'lsp-extend-selection
-      "lX" 'lsp-execute-code-action))
+    ;; (dw/leader-key-def
+    ;;   "l"  '(:which-key "lsp")
+    ;;   "ld" 'xref-find-definitions
+    ;;   "lr" 'xref-find-references
+    ;;   "lvr" 'lsp-rename
+    ;;   "lir" 'lsp-ui-peek-find-references
+    ;;   "ln" 'lsp-ui-find-next-reference
+    ;;   "lp" 'lsp-ui-find-prev-reference
+    ;;   "ls" 'counsel-imenu
+    ;;   "le" 'lsp-ui-flycheck-list
+    ;;   "lS" 'lsp-ui-sideline-mode
+    ;;   "lx" 'lsp-extend-selection
+    ;;   "lX" 'lsp-execute-code-action)
+    )
 
   (use-package lsp-ui
     :after lsp-mode
