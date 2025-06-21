@@ -1497,6 +1497,15 @@ Get cache files outta my project tree!
   (org-babel-tmux-terminal "kitty")
   (org-babel-tmux-terminal-opts '("-T" "ob-tmux" "-e")))
 #+end_src
+
+** org-mime
+#+begin_src elisp
+  (use-package org-mime
+    :config
+    (setq org-mime-export-options '(:section-numbers nil
+                                    :with-author nil
+                                    :with-toc nil)))
+#+end_src
 * Misc. 
 ** Load Custom.el
 #+begin_src elisp
