@@ -1460,8 +1460,7 @@ add package runtfmt
 #+begin_src elisp
   (use-package magit
     :ensure t
-    :general
-    (general-nmap "SPC g g" 'magit-status))
+    :bind (("C-c p g" . 'magit-status)))
 
   (use-package magit-todos
     :ensure t
