@@ -233,24 +233,6 @@ Modal editing for default emacs keybindings.
     (meow-global-mode 1))
 #+end_src
 
-*** COMMENT Leader Key
-Actively being replaced by meow-mode.
-
-#+begin_src elisp :noweb-ref emacs-hotkeys
-  (use-package general
-    :ensure t
-    ;; :config
-    ;; (general-evil-setup t)
-    ;; (general-create-definer dw/leader-key-def
-    ;;   :keymaps '(normal emacs)
-    ;;   :prefix "SPC"
-    ;;   :global-prefix "C-SPC")
-    ;; (general-create-definer dw/ctrl-c-keys
-    ;;   :prefix "C-c")
-    ;; (global-set-key (kbd "C-x b") 'consult-buffer)
-    )
-#+end_src
-
 *** MacOS Bindings
 #+begin_src elisp :noweb-ref emacs-hotkeys
   (setq mac-command-modifier 'meta)
