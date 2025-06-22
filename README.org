@@ -1443,6 +1443,8 @@ add package runtfmt
 #+begin_src elisp
   (use-package magit
     :ensure t
+    :custom
+    (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
     :bind (("C-c p g" . 'magit-status)))
 
   (use-package magit-todos
