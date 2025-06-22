@@ -239,6 +239,12 @@ Modal editing for default emacs keybindings.
   (setq mac-option-modifier 'none)
 #+end_src
 
+*** which key
+#+begin_src elisp
+  (use-package which-key
+    :config
+    (which-key-mode))
+#+end_src
 ** TODO Weird Requirements
 #+begin_src elisp
   (use-package el-mock
@@ -1123,11 +1129,6 @@ Provides org-id search functionality much faster than org-roams.
   (use-package lsp-treemacs
     :ensure t
     :commands lsp-treemacs-errors-list)
-
-  (use-package which-key
-    :ensure t
-    :config
-    (which-key-mode))
 
   (use-package company
     :ensure t
