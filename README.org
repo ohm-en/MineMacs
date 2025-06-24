@@ -143,6 +143,8 @@ Modal editing for default emacs keybindings.
 
 #+begin_src elisp
   (use-package meow
+    :custom
+    (meow-use-clipboard t)
     :config 
     ;; NOTE: default QWERTY setup (found here: https://github.com/meow-edit/meow/blob/master/KEYBINDING_QWERTY.org)
     (defun meow-setup ()
