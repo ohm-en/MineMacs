@@ -88,7 +88,6 @@ Some sane defaults copied from crafted-emacs.
 #+end_src
 
 ** General Keybindings
-
 *** COMMENT EVIL Mode
 Migrating to meow-mode. Leaving this until it's done.
 
@@ -236,7 +235,7 @@ Modal editing for default emacs keybindings.
 #+end_src
 
 *** MacOS Bindings
-#+begin_src elisp :noweb-ref emacs-hotkeys
+#+begin_src elisp
   (setq mac-command-modifier 'meta)
   (setq mac-option-modifier 'none)
 #+end_src
@@ -253,6 +252,45 @@ Modal editing for default emacs keybindings.
     :ensure t)
 #+end_src
 
+** Modeline Completion
+#+begin_src elisp
+  ;; Core completion UI
+  (use-package vertico
+    :init
+    (vertico-mode))
+
+  ;; Better matching (flex/fuzzy)
+  (use-package orderless
+    :custom
+    (completion-styles '(orderless basic))
+    (completion-category-defaults nil)
+    (completion-category-overrides '((file (styles partial-completion)))))
+
+  ;; Rich annotations in minibuffer
+  (use-package marginalia
+    :init
+    (marginalia-mode))
+
+  ;; Minibuffer actions (like Helm actions)
+  (use-package embark
+    :bind
+    (("C-." . embark-act)
+     ("C-;" . embark-dwim)
+     ("C-h B" . embark-bindings)))
+
+  ;; Enhanced commands (e.g. `consult-find`, `consult-buffer`, etc.)
+  (use-package consult
+    :bind
+    (("C-s" . consult-line)
+     ("C-x b" . consult-buffer)
+     ("M-y" . consult-yank-pop)
+     ("C-x C-r" . consult-recent-file)
+     ("C-c k" . consult-ripgrep)
+     ("C-c h" . consult-history)
+     ("C-c m" . consult-mode-command)
+     ("C-c i" . consult-imenu)))
+#+end_src
+
 * Window & File Navigation
 ** Default Opens
 #+begin_src elisp
@@ -263,7 +301,6 @@ Modal editing for default emacs keybindings.
 *** Perspective-el
 #+begin_src elisp 
   (use-package perspective
-    :ensure t
     :custom
     (persp-mode-prefix-key (kbd "C-c M-p"))
     :init
@@ -273,27 +310,29 @@ Modal editing for default emacs keybindings.
     :ensure t
     :after (perspective projectile))
 #+end_src
-
-#+begin_src elisp
-  (use-package treemacs-perspective 
-    :after (treemacs perspective)
-    :ensure t
-    :config (treemacs-set-scope-type 'Perspectives))
-#+end_src
 ** Project Management
 *** Projectile
-#+begin_src elisp 
+#+begin_src elisp
   (use-package projectile
-    :ensure t
+    :demand t
+    :bind
+    (("C-c p e" . projectile-run-eshell))
     :config
-    (projectile-mode +1)
-    (define-key projectile-mode-map (kbd "C-c C-p") 'projectile-command-map))
+    (projectile-mode +1))
+
+  (use-package consult-projectile
+    ;; :after (consult projectile)
+    :demand t
+    :bind
+    (("C-c p p" . consult-projectile)
+     ("C-c p P" . consult-projectile-switch-project)
+     ("C-c p f" . consult-projectile-find-file)
+     ("C-c p b" . consult-projectile-switch-to-buffer)))
 #+end_src
 
 *** envrc
 #+begin_src elisp
   (use-package envrc
-    :ensure t
     ;;:after (flycheck) ; or other minor modes you want to load before envrc
     :config
     (envrc-global-mode))
@@ -317,32 +356,32 @@ Modal editing for default emacs keybindings.
 
   (define-key minibuffer-local-map (kbd "C-v") 'yank)
 #+end_src
-
 *** Org-mode
 **** Org
 #+begin_src elisp
-  (use-package org
-   :config
-   (setq org-startup-indented t)
-   (setq org-log-into-drawer t)
-   ;; NOTE: C-c c is already mapped, find a new keybinding for use in meow-mode
-   ;; (dw/leader-key-def
-   ;;  "c"  '(:which-key "Copy")
-   ;;  "cl" 'org-store-link
-   ;;  "ct" 'org-time-stamp-inactive
-   ;;  "cj" 'org-babel-next-src-block
-   ;;  "ck" 'org-babel-previous-src-block)
-   )
+   (use-package org
+    :custom
+    (org-startup-indented t)
+    (org-log-into-drawer t)
+    :config
+    ;; NOTE: C-c c is already mapped, find a new keybinding for use in meow-mode
+    ;; (dw/leader-key-def
+    ;;  "c"  '(:which-key "Copy")
+    ;;  "cl" 'org-store-link
+    ;;  "ct" 'org-time-stamp-inactive
+    ;;  "cj" 'org-babel-next-src-block
+    ;;  "ck" 'org-babel-previous-src-block)
+    )
 
 
-  (use-package toc-org
+   (use-package toc-org
+     :ensure t
+     :hook (org-mode . toc-org-mode))
+
+
+   (use-package doct 
     :ensure t
-    :hook (org-mode . toc-org-mode))
-
-
-  (use-package doct 
-   :ensure t
-   :commands (doct))
+    :commands (doct))
 #+end_src
 
 #+begin_src elisp
@@ -368,18 +407,8 @@ Slowly migrating away from org-roam to org-node.
 ***** Package Configuration
 #+BEGIN_SRC elisp :noweb yes
   (use-package org-roam
-    :after org
-    :after (org emacsql-sqlite-builtin)
-    :bind (("C-c n l" . org-roam-buffer-toggle)
-           ;; ("C-c n f" . org-roam-node-find)
-           ("C-c n g" . org-roam-graph)
-           ("C-c n w" . org-roam-refile)
-           ("C-c n i" . org-roam-node-insert)
-           ("C-c n c" . org-capture)
-           ("C-c n j" . org-roam-dailies-capture-today)
-           ;; ("C-c y"   . get-id-as-link)
-           ;; ("C-c n y" . my/org-roam-copy-node-as-markdown-link)
-           )
+    ;; :after org
+    :demand t
     :config
     (org-roam-db-autosync-mode)
     (cl-defmethod org-roam-node-parent-child-title ((node org-roam-node))
@@ -1065,26 +1094,40 @@ Provides org-id search functionality much faster than org-roams.
 
 *** LSP-mode
 #+begin_src elisp
-  (use-package helm
-     :ensure t
-     :init
-     (setq helm-M-x-fuzzy-match t
-       helm-mode-fuzzy-match t
-       helm-buffers-fuzzy-matching t
-       helm-recentf-fuzzy-match t
-       helm-split-window-in-side-p t)
+  (use-package lsp-mode
+    :defer t
+    :hook ((js2-mode typescript-mode) . lsp)
+    :commands (lsp lsp-deferred)
+    :config
+    (defvar my/lsp-command-map
+      (let ((map (make-sparse-keymap)))
+        (define-key map (kbd "d") #'xref-find-definitions)
+        (define-key map (kbd "r") #'xref-find-references)
+        (define-key map (kbd "R") #'lsp-rename)
+        (define-key map (kbd "a") #'lsp-execute-code-action)
+        (define-key map (kbd "f") #'lsp-format-buffer)
+        (define-key map (kbd "s") #'consult-lsp-symbols)
+        (define-key map (kbd "e") #'lsp-treemacs-errors-list)
+        (define-key map (kbd "i") #'lsp-find-implementation)
+        (define-key map (kbd "t") #'lsp-find-type-definition)
+        (define-key map (kbd "h") #'lsp-ui-doc-show)
+        map)
+      "My custom LSP command keymap.")
+    (global-set-key (kbd "C-c l") my/lsp-command-map))
 
-     :bind (("M-x" . helm-M-x)
-            ("C-x r b" . helm-filtered-bookmarks)
-            ("C-x C-f" . helm-find-files)
-            ("C-x b" . helm-buffers-list)
-     :map helm-map
-            ([escape] . helm-keyboard-quit))
-     :config
-     (helm-mode 1))
+
+  (use-package lsp-ui
+    :after lsp-mode
+    :commands lsp-ui-mode
+    :hook (lsp-mode . lsp-ui-mode)
+    :custom
+    (lsp-ui-sideline-enable t)
+    (lsp-ui-sideline-show-hover nil)
+    (lsp-ui-doc-position 'bottom)
+    :config
+    (lsp-ui-doc-show))
 
   (use-package dap-mode
-    :ensure t
     :after dap-node
     ;; Uncomment the config below if you want all UI panes to be hidden by default!
     ;; :custom
@@ -1093,50 +1136,19 @@ Provides org-id search functionality much faster than org-roams.
     ;; (dap-ui-mode 1)
     )
 
-  (use-package lsp-mode
-    :ensure t
-    :hook ((js2-mode typescript-mode) . lsp)
-    :commands lsp
-    :config
-    ;; (dw/leader-key-def
-    ;;   "l"  '(:which-key "lsp")
-    ;;   "ld" 'xref-find-definitions
-    ;;   "lr" 'xref-find-references
-    ;;   "lvr" 'lsp-rename
-    ;;   "lir" 'lsp-ui-peek-find-references
-    ;;   "ln" 'lsp-ui-find-next-reference
-    ;;   "lp" 'lsp-ui-find-prev-reference
-    ;;   "ls" 'counsel-imenu
-    ;;   "le" 'lsp-ui-flycheck-list
-    ;;   "lS" 'lsp-ui-sideline-mode
-    ;;   "lx" 'lsp-extend-selection
-    ;;   "lX" 'lsp-execute-code-action)
-    )
-
-  (use-package lsp-ui
-    :after lsp-mode
-    :ensure t
-    :commands lsp-ui-mode
-    :hook (lsp-mode . lsp-ui-mode)
-    :config
-    (setq lsp-ui-sideline-enable t)
-    (setq lsp-ui-sideline-show-hover nil)
-    (setq lsp-ui-doc-position 'bottom)
-    (lsp-ui-doc-show))
-
-  (use-package helm-lsp
-    :ensure t
-    :commands helm-lsp-workspace-symbol)
-
-  (use-package lsp-treemacs
-    :ensure t
-    :commands lsp-treemacs-errors-list)
-
   (use-package company
-    :ensure t
-    :config
-    (setq company-idle-delay 0)
-    (global-company-mode 1))
+    :after lsp-mode
+    :hook (lsp-mode . company-mode)
+    :bind (:map company-active-map
+           ("<tab>" . company-complete-selection))
+          (:map lsp-mode-map
+           ("<tab>" . company-indent-or-complete-common))
+    :custom
+    (company-minimum-prefix-length 1)
+    (company-idle-delay 0.0))
+
+  (use-package company-box
+    :hook (company-mode . company-box-mode))
 
   (use-package flycheck
     :ensure t
@@ -1144,8 +1156,36 @@ Provides org-id search functionality much faster than org-roams.
     :hook (lsp-mode . flycheck-mode)
     :config
     (setq flycheck-check-syntax-automatically '(mode-enabled save)))
+#+end_src
+*** Python
+#+begin_src elisp
+  (use-package python-mode
+    :hook ((python-mode . lsp-deferred)
+           (python-mode . (lambda ()
+                            (setq comment-style 'plain)
+                            (setq indent-tabs-mode nil)
+                            (setq tab-width 4))))
+    :custom
+    (dap-python-debugger 'debugpy)
+    :config
+    (require 'dap-python))
 
+  (use-package python-mode
+    :hook (python-mode . lsp-deferred)
+    :custom
+    (dap-python-debugger 'debugpy)
+    :config
+    (require 'dap-python))
 
+  (use-package lsp-pyright
+    :after lsp-mode
+    :hook (python-mode . (lambda ()
+                           (require 'lsp-pyright)
+                           (lsp-deferred))))
+
+  (use-package pyvenv
+    :config
+    (pyvenv-mode 1))
 #+end_src
 *** Clojure(Script) 
 #+begin_src elisp
@@ -1165,13 +1205,13 @@ Provides org-id search functionality much faster than org-roams.
   (setq-default tab-width 2))
 
   (use-package typescript-mode
-    :ensure t
+    :hook (typescript-mode . lsp-deferred)
     :mode "\\.ts\\'"
     :config
     (setq typescript-indent-level 2))
 
   (use-package js2-mode
-    :ensure t
+    :hook (js2-mode . lsp-deferred)
     :mode (("\\.js\\'" . js2-mode)
            ("\\.cjs\\'" . js2-mode)
            ("\\.mjs\\'" . js2-mode))
@@ -1257,14 +1297,14 @@ add package runtfmt
 ** Automatic Formatting
 #+begin_src elisp
   (use-package apheleia
-    :ensure t
     :config
     (setf (alist-get 'prettier apheleia-formatters)
           `("prettier" "--stdin" "--stdin-filepath" ,(lambda () buffer-file-name)))
     (setf (alist-get 'web-mode apheleia-mode-alist) 'prettier)
     (setf (alist-get 'typescript-mode apheleia-mode-alist) 'prettier)
     (setf (alist-get 'js-mode apheleia-mode-alist) 'prettier)
-    (setf (alist-get 'js2-mode apheleia-mode-alist) 'prettier))
+    (setf (alist-get 'js2-mode apheleia-mode-alist) 'prettier)
+    (apheleia-global-mode +1))
 #+end_src
 
 ** Helpful Minor Modes
@@ -1273,20 +1313,6 @@ add package runtfmt
   (use-package hideshow
      :ensure t
      :hook (prog-mode . hs-minor-mode))
-#+end_src
-
-*** COMMENT Treesitter
-#+begin_src elisp
-  ;;   (use-package tree-sitter
-  ;;     :ensure t
-  ;;     :config
-  ;;     (global-tree-sitter-mode) ; Enable tree-sitter globally
-  ;;     ;; Enable highlighting if tree-sitter is active
-  ;;     (add-hook 'tree-sitter-mode-hook #'tree-sitter-hl-mode))
-  ;;
-  ;;   (use-package tree-sitter-langs
-  ;;     :ensure t
-  ;;     :after tree-sitter)
 #+end_src
 
 *** LISP Navigation
@@ -1341,8 +1367,27 @@ add package runtfmt
     (yas/expand-snippet (buffer-string) (point-min) (point-max)))
 #+end_src
 
+*** avy
+#+begin_src elisp
+  (use-package avy
+    :ensure t
+    :config
+    (dw/leader-key-def
+      "s" #'avy-goto-char)
+    (setq avy-background t
+          avy-style 'at-full))
+
+#+end_src
+
+*** Rainbow Delimiters
+Colorize nested parens & brackets for ease in programming modes.
+
+#+begin_src elisp
+  (use-package rainbow-delimiters
+    :hook (prog-mode . rainbow-delimiters-mode))
+#+end_src
 * Applications
-** Notmuch
+** COMMENT Notmuch
 #+begin_src elisp
   (use-package notmuch
     :ensure t)
@@ -1447,7 +1492,10 @@ add package runtfmt
     :ensure t
     :custom
     (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
-    :bind (("C-c p g" . 'magit-status)))
+    :bind (("C-c p g" . magit-status))
+    :bind (:map magit-status-mode-map
+                ("k"   . magit-discard)
+                ("x" . meow-line)))
 
   (use-package magit-todos
     :ensure t
