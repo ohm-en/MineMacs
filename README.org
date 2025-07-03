@@ -79,12 +79,12 @@ Some sane defaults copied from crafted-emacs.
 ** Font
 #+begin_src elisp
   (add-hook 'emacs-startup-hook
-      (lambda ()
-        (custom-set-faces
-         `(default ((t (:font "JetBrainsMono Nerd Font"))))
-         `(fixed-pitch ((t (:inherit (default)))))
-         `(fixed-pitch-serif ((t (:inherit (default)))))
-         `(variable-pitch ((t (:font "Fira Sans")))))))
+    (lambda ()
+      (custom-set-faces
+       `(default ((t (:font "JetBrainsMono Nerd Font,DejaVu Sans Mono,Courier New"))))
+       `(fixed-pitch ((t (:inherit (default)))))
+       `(fixed-pitch-serif ((t (:inherit (default)))))
+       `(variable-pitch ((t (:font "Fira Sans,Arial,Helvetica")))))))
 #+end_src
 
 ** General Keybindings
