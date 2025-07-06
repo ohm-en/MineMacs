@@ -753,6 +753,11 @@ Provides org-id search functionality much faster than org-roams.
     :pin melpa
     :after ox)
 #+end_src
+**** Auto Tangle
+#+begin_src elisp
+  (use-package org-auto-tangle
+    :hook (org-mode . org-auto-tangle-mode))
+#+end_src
 **** TODO nowebdit
 :PROPERTIES:
 :ID:       68B8966D-3EE7-48FE-B83F-52A8F224602D
