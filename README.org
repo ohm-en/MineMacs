@@ -1393,12 +1393,21 @@ Colorize nested parens & brackets for ease in programming modes.
     :hook (prog-mode . rainbow-delimiters-mode))
 #+end_src
 * Applications
-** COMMENT Notmuch
+** Notmuch
 #+begin_src elisp
   (use-package notmuch
-    :ensure t)
+    :ensure t
+    :commands (notmuch notmuch-search notmuch-tree)
+    :init
+    (setq mail-user-agent 'notmuch-user-agent)
+    :custom
+    (notmuch-fcc-dirs nil)
+    (notmuch-search-oldest-first nil)
+    (notmuch-show-all-tags-list t)
+    (notmuch-show-inline-images t))
 #+end_src
 
+*** Some Old Custom Fn
 #+begin_src elisp
   (org-link-set-parameters "notmuch"
       :follow 'org-notmuch-open
