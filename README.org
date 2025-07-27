@@ -1509,8 +1509,8 @@ Colorize nested parens & brackets for ease in programming modes.
     (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
     :bind (("C-c p g" . magit-status))
     :bind (:map magit-status-mode-map
-                ("k"   . magit-discard)
-                ("x" . meow-line)))
+                ("x"   . magit-discard)
+                ("v" . meow-line)))
 
   (use-package magit-todos
     :ensure t
