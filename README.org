@@ -1392,6 +1392,41 @@ Colorize nested parens & brackets for ease in programming modes.
   (use-package rainbow-delimiters
     :hook (prog-mode . rainbow-delimiters-mode))
 #+end_src
+
+
+*** Flyover
+#+begin_src elisp
+  (use-package flyover
+    :after flycheck
+    :hook (flycheck-mode . flyover-mode)
+    :custom
+    (flyover-levels '(error warning info))
+
+    (flyover-use-theme-colors t)
+    (flyover-background-lightness 45)
+    (flyover-percent-darker 40)
+    (flyover-text-tint 'lighter)
+    (flyover-text-tint-percent 50)
+
+    :config
+    (custom-set-faces
+     '(flyover-error
+       ((t :background "#453246"
+           :foreground "#ea8faa"
+           :height 0.9
+           :weight normal)))
+     '(flyover-warning
+       ((t :background "#331100"
+           :foreground "#DCA561"
+           :height 0.9
+           :weight normal)))
+     '(flyover-info
+       ((t :background "#374243"
+           :foreground "#a8e3a9"
+           :height 0.9
+           :weight normal)))))
+#+end_src
+
 * Applications
 ** Notmuch
 #+begin_src elisp
