@@ -1654,6 +1654,11 @@ Load after custom.el so it remembers your confirmation to load the the theme.
      (eshell-send-input))))
 #+end_src
 
+#+begin_src elisp
+  (use-package gptel
+    :ensure t)
+#+end_src
+
 * Meta
 ** Setup
 *** Dependancies
