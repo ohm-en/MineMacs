@@ -231,6 +231,7 @@ Modal editing for default emacs keybindings.
        '("<escape>" . ignore)))
 
     (meow-setup)
+    (add-to-list 'meow-mode-state-list 'special-mode)
     (meow-global-mode 1))
 #+end_src
 
