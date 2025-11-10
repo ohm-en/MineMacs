@@ -74,7 +74,6 @@
   :config
   (quelpa-use-package-activate-advice))
 
-
 (setq org-id-locations-file
       (expand-file-name "org-id-locations"
                         (expand-config-directory "var")))

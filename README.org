@@ -76,17 +76,6 @@ Some sane defaults copied from crafted-emacs.
   (scroll-bar-mode -1)
 #+end_src
 
-** Font
-#+begin_src elisp
-  (add-hook 'emacs-startup-hook
-    (lambda ()
-      (custom-set-faces
-       `(default ((t (:font "JetBrainsMono Nerd Font,DejaVu Sans Mono,Courier New"))))
-       `(fixed-pitch ((t (:inherit (default)))))
-       `(fixed-pitch-serif ((t (:inherit (default)))))
-       `(variable-pitch ((t (:font "Fira Sans,Arial,Helvetica")))))))
-#+end_src
-
 ** General Keybindings
 *** COMMENT EVIL Mode
 Migrating to meow-mode. Leaving this until it's done.
