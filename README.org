@@ -77,55 +77,6 @@ Some sane defaults copied from crafted-emacs.
 #+end_src
 
 ** General Keybindings
-*** COMMENT EVIL Mode
-Migrating to meow-mode. Leaving this until it's done.
-
-#+begin_src elisp
-
-  ;; (use-package evil
-  ;;   :ensure t
-  ;;   :init
-  ;;   (customize-set-variable 'evil-want-integration t)
-  ;;   (customize-set-variable 'evil-want-keybinding nil)
-  ;;   (customize-set-variable 'evil-want-C-i-jump nil)
-  ;;   (customize-set-variable 'evil-respect-visual-line-mode t)
-  ;;   (customize-set-variable 'evil-undo-system 'undo-redo)
-  ;;   ;; TODO: Do I want these?
-  ;;   ;; (customize-set-variable 'evil-want-C-i-jump t)
-  ;;   ;; (customize-set-variable 'evil-want-Y-yank-to-eol t)
-  ;;   ;; (customize-set-variable 'evil-want-fine-undo t))
-  ;;   :config
-  ;;   (evil-mode 1)
-  ;;   (setq evil-auto-indent t)
-  ;;   ;; Make evil search more like vim
-  ;;   (evil-select-search-module 'evil-search-module 'evil-search)
-  ;;   ;; Make C-g revert to normal state
-  ;;   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
-  ;;   ;; Rebind `universal-argument' to 'C-M-u' since 'C-u' now scrolls the buffer
-  ;;   (global-set-key (kbd "C-M-u") 'universal-argument)
-  ;;   ;; Use visual line motions even ouside of visual-line-mode buffers
-  ;;   (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-  ;;   (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
-  ;;   ;; Make sure some modes start in Emacs state
-  ;;   (dolist (mode '(custom-mode
-  ;;                   eshell-mode
-  ;;                   term-mode))
-  ;;     (add-to-list 'evil-emacs-state-modes mode)))
-
-  ;; (use-package evil-nerd-commenter
-  ;;   :requires evil
-  ;;   :ensure t
-  ;;   :config
-  ;;   ;; Enables Evil Nerd Commenter
-  ;;   (evilnc-default-hotkeys))
-
-  ;; (use-package evil-collection
-  ;;   :requires evil
-  ;;   :ensure t
-  ;;   :config
-  ;;   (evil-collection-init))
-#+end_src
-
 *** Meow-Mode
 Modal editing for default emacs keybindings.
 
@@ -1187,17 +1138,13 @@ Provides org-id search functionality much faster than org-roams.
 #+begin_src elisp
   (use-package cider
     :ensure t
-    :mode "\\.clj[sc]?\\'"
-    :config
-    (evil-collection-cider-setup))
-
+    :mode "\\.clj[sc]?\\'")
 #+end_src
 *** JavaScript/TypeScript
 #+begin_src elisp
   (defun dw/set-js-indentation ()
   (setq js-indent-level 2)
   (setq display-line-numbers 'relative)
-  (setq evil-shift-width js-indent-level)
   (setq-default tab-width 2))
 
   (use-package typescript-mode
