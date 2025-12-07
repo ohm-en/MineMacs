@@ -1313,8 +1313,7 @@ add package runtfmt
   (use-package avy
     :ensure t
     :config
-    (dw/leader-key-def
-      "s" #'avy-goto-char)
+    (global-set-key (kbd "C-f") #'avy-goto-char)
     (setq avy-background t
           avy-style 'at-full))
 
