@@ -234,39 +234,11 @@ Modal editing for default emacs keybindings.
   (add-to-list 'auto-mode-alist '("\\.pdf\\'" . doc-view-mode))
 #+end_src
 
-** Frame/Window Management
-*** Perspective-el
-#+begin_src elisp 
-  (use-package perspective
-    :custom
-    (persp-mode-prefix-key (kbd "C-c M-p"))
-    :init
-    (persp-mode))
 
-  (use-package persp-projectile
-    :ensure t
-    :after (perspective projectile))
-#+end_src
-** Project Management
-*** Projectile
 #+begin_src elisp
-  (use-package projectile
-    :demand t
-    :bind
-    (("C-c p e" . projectile-run-eshell))
-    :config
-    (projectile-mode +1))
-
-  (use-package consult-projectile
-    ;; :after (consult projectile)
-    :demand t
-    :bind
-    (("C-c p p" . consult-projectile)
-     ("C-c p P" . consult-projectile-switch-project)
-     ("C-c p f" . consult-projectile-find-file)
-     ("C-c p b" . consult-projectile-switch-to-buffer)))
 #+end_src
 
+** Project Management
 *** envrc
 #+begin_src elisp
   (use-package envrc
