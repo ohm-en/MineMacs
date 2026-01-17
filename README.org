@@ -311,252 +311,25 @@ Modal editing for default emacs keybindings.
      (add-hook 'org-trigger-hook #'my/org-process-edna)
      (add-hook 'org-after-todo-state-change-hook #'my/org-process-edna))
 #+end_src
-**** Org-Roam
-Slowly migrating away from org-roam to org-node.
-
-***** Package Configuration
-#+BEGIN_SRC elisp :noweb yes
-  (use-package org-roam
-    ;; :after org
-    :demand t
-    :config
-    (org-roam-db-autosync-mode)
-    (cl-defmethod org-roam-node-parent-child-title ((node org-roam-node))
-      "Get the title of the parent node or an empty string if no parent is found."
-      (concat (my/get-full-node-title node) "@"))
-
-    (setq org-roam-node-display-template
-        (concat "${parent-child-title:*}"
-                (propertize "${tags:10}" 'face 'org-tag)))
-    <<org-roam-config>>
-    :custom
-    (org-roam-database-connector 'sqlite-builtin))
-#+END_SRC
-***** Org Roam Config
-:PROPERTIES:
-:header-args: :tangle no :exports none :noweb-ref org-roam-config
-:END:
-
-****** Helper Functions
-
-#+begin_src elisp
-  (defun my/extract-org-id-from-link (link)
-    "Extract the ID from an org-mode link."
-    (when (string-match "\\[\\[id:\\(.*?\\)\\]\\[.*?\\]\\]" link)
-      (match-string 1 link)))
-
-  (defun my/org-roam-get-node-by-id (id)
-    "Get an org-roam node by its ID.
-  Return the node if it exists, otherwise return nil."
-    (let ((node (org-roam-node-from-id id)))
-      (if node
-          (progn
-            (message "Node Title: %s" (org-roam-node-title node))
-            node)
-        (progn
-          (message "Node not found")
-          nil))))
-
-  (defun my/org-roam-get-node-property (node property)
-    "Get a specific PROPERTY from an org-roam node by its ID.
-  Return the property value if it exists, otherwise return nil."
-          (let ((properties (org-roam-node-properties node)))
-            (cdr (assoc property properties))))
-
-  (defun my/org-roam-node-get-parent (node)
-    (let ((parent_link (my/org-roam-get-node-property node "PARENT")))
-      (if (stringp parent_link)
-          (my/org-roam-get-node-by-id (my/extract-org-id-from-link parent_link))
-        nil)))
-
-  (defun my/org-roam-node-get-alias (node)
-    (my/org-roam-get-node-property node "ALIAS"))
-
-  (defun my/format-markdown-link (title protocol path)
-    "Return a link valid link for Markdown based on TITLE, PROTOCOL (like http), and path."
-    (concat "[" title "]" "(" protocol "://" path ")"))
-#+end_src
-
-#+begin_src elisp
-  (defun my/is-child-id-p (possible-child-id parent-id)
-    (let ((possible-child-node (my/org-roam-get-node-by-id possible-child-id))
-          (parent-node (my/org-roam-get-node-by-id parent-id)))
-      (when (and possible-child-node parent-node)
-        (my/is-child-node-p possible-child-node parent-node))))
-
-  (defun my/org-roam-nodes-equal-p (node1 node2)
-    "Check if two org-roam nodes NODE1 and NODE2 are equal."
-    (string= (org-roam-node-id node1)
-             (org-roam-node-id node2)))
-
-  ; TODO: Add maximum depth parameter with default
-  (defun my/is-child-node-p (possible-child-node parent-node)
-    "Takes two org nodes and determines if second is an ancestor of the first"
-    (if (my/org-roam-nodes-equal-p possible-child-node parent-node)
-        t
-      (let ((direct-parent (my/org-roam-node-get-parent possible-child-node)))
-        (when direct-parent
-          (if (my/org-roam-nodes-equal-p direct-parent parent-node)
-              t
-            (my/is-child-node-p direct-parent parent-node))))))
-
-  ;; TODO: IF IS PARENT NODE ITSELF
-  (defun my/org-agenda-item-has-parent-p (item parent-id)
-    "Print the :PARENT: property of the ITEM to the *Messages* buffer."
-    (let ((org-parent-node (my/org-roam-get-node-by-id parent-id))
-          (marker (get-text-property 0 'org-hd-marker item)))
-      (when (and org-parent-node marker)
-        (let ((org-node-id (org-entry-get marker "ID" t)))
-          (when org-node-id
-            (let ((org-node (my/org-roam-get-node-by-id org-node-id)))
-              (if (my/org-roam-nodes-equal-p org-node org-parent-node)
-                  t
-                (my/is-child-node-p org-node org-parent-node))))))))
-
-  (defun my/get-node-parent-hierarchy (node &optional lower-nodes)
-    "Return a decending list of child nodes recursively ending with the initial NODE.
-    LOWER-NODES allow prepending already calculated children and is used internal to keep state."
-    (let ((nodes (cons node (or lower-nodes '()))))
-      (or (when-let ((parent (my/org-roam-node-get-parent node)))
-            (my/get-node-parent-hierarchy parent nodes))
-          nodes)))
-
-  (defun my/get-full-node-title (node)
-    "Returns the title of the node prepended with its ancestor node titles."
-    (mapconcat #'org-roam-node-title (my/get-node-parent-hierarchy node) ":"))
-
-  (defun my/get-shorthand-node-title(node &optional accumulated-title)
-    "Returns the title of the node prepended with its ancestor node titles.
-  Short-circuits if an alias is found, returning the alias and the titles leading up to it."
-    (let ((title (if-let* ((alias (my/org-roam-node-get-alias node)))
-                     alias
-                   (let ((node-title (org-roam-node-title node)))
-                     (or (when-let ((parent (my/org-roam-node-get-parent node)))
-                         (my/get-shorthand-node-title parent node-title))
-                       node-title))))
-          (previous-title (if accumulated-title
-                             (concat ":" accumulated-title)
-                           "")))
-      (concat title previous-title)))
-
-  (defun my/get-node-markdown-link (node)
-    "Return a markdown link to the ID of a node titled with the nodes full parent path."
-
-    (my/format-markdown-link (my/get-shorthand-node-title node) "emacs" (org-roam-node-id node)))
-
-  (defun my/create-org-id-markdown-link (org-id)
-    (let ((headline-title (get-current-headline-title)))
-      (my/format-markdown-link headline-title "emacs" org-id)))
-#+end_src
-
-#+begin_src elisp
-  (defun org-get-buffer-title ()
-     (let* ((parsed (org-element-parse-buffer 'element))
-          (title (org-element-map parsed 'keyword
-                    (lambda (k)
-                      (when (string-equal (org-element-property :key k) "TITLE")
-                        (org-element-property :value k))))))
-     (when title
-       (if (interactive-p)
-           (message (car title)))
-       (car title))))
-
-  (defun get-current-headline-title()
-    (or (org-entry-get nil "ITEM") (car (cdr (car (org-collect-keywords '("title")))))))
-
-  (defun gsgx/org-roam-create-note-from-headline ()
-    "Create an Org-roam note from the current headline if it doesn't
-  exist without jumping to it"
-    (let* ((title (nth 4 (org-heading-components))))
-      ;; TODO: How can I just use the title without user input?
-      (node (org-roam-node-read title)))
-    (if (org-roam-node-file node)
-      (message "Skipping %s, node already exists" title)
-      ;; Without this the subsequent kills seem to be grouped together, not
-      ;; sure why
-      (kill-new "")
-      (org-cut-subtree)
-      (org-roam-capture- :node node)
-      (org-paste-subtree)
-      (kill-whole-line)
-      (org-capture-finalize nil)
-      ;; `org-map-entries' call continue from the right place
-      (setq org-map-continue-from
-          (org-element-property :begin (org-element-at-point)))))
-
-  (defun gsgx/org-roam-create-note-from-headlines ()
-    (interactive)
-    (if (region-active-p)
-        ;; `region-start-level' means we'll map over only headlines that are at
-        ;; the same level as the first headline in the region. This may or may not
-        ;; be what you want
-        (org-map-entries
-         'gsgx/org-roam-create-note-from-headline t 'region-start-level)
-      ;; If no region was selected, just create the note from the current headline
-      (gsgx/org-roam-create-note-from-headline)))
-#+end_src
-
-****** User Functions
-
-#+begin_src elisp
-  (defun get-id-as-link ()
-     "Retrieves the org-id of the current headline or note, formats it as a URI, and copies it to the kill-ring."
-   (interactive)
-   (let* ((org-id (org-id-get nil 'create))
-          (node (my/org-roam-get-node-by-id org-id)))
-     (if node
-         (org-kill-new (my/get-node-markdown-link node))
-       (org-kill-new (my/create-org-id-markdown-link org-id)))))
-
-  (defun my/org-roam-copy-node-as-markdown-link ()
-       "Prompts the user to select a node which is copied to the kill ring as a customized link."
-       (interactive)
-       (let* ((node (org-roam-node-read))
-              (node-link (my/get-node-markdown-link node)))
-         (org-kill-new node-link)))
-
-  (defun my/org-roam-node-set-parent ()
-    "Find an org-roam node and add its ID as the parent_id to the current headline."
-    (interactive)
-    (let* ((node (org-roam-node-read))
-           (node-id (org-roam-node-id node))
-           (node-title (org-roam-node-title node))
-           (link (format "[[id:%s][%s]]" node-id node-title)))
-      (org-entry-put (point) "PARENT" link)))
-
-  (setq org-roam-capture-templates
-        '(
-          ("d" "default" plain "%?"
-           :target (file+head "Inbox/Orgzly/%<%Y%m%d%H%M%S>-${slug}.org"
-                              "#+title: ${title}\n") :unnarrowed t)
-        ))
-#+end_src
-
 **** Org-node
 Provides org-id search functionality much faster than org-roams. 
 
 #+begin_src elisp :noweb yes
+  (use-package org-mem
+    :defer
+    :config
+    (setq org-mem-do-sync-with-org-id t)
+    (org-mem-updater-mode))
+
   (use-package org-node
-     :after org-roam
      :config
      <<org-node-functions>>
      <<org-node-interactive>>
+     <<org-node-hooks>>
      (org-node-cache-mode)
-     (setq org-node-alter-candidates t)
-     (setq org-node-affixation-fn #'my/org-node-title-affixation-fn)
      <<org-node-hotkeys>>
+     (my/org-node-parent-mode)
      )
-
-  (use-package org-node-fakeroam
-    :after org-node
-    :defer
-    :config
-    (setq org-roam-link-auto-replace nil)
-    (setq org-roam-db-update-on-save nil)
-    (org-node-fakeroam-redisplay-mode)
-    (org-node-fakeroam-jit-backlinks-mode)
-    ;; NOTE: roam-db needs to be updated for parent links
-    (org-node-fakeroam-db-feed-mode))
 #+end_src
 
 ***** KeyMaps
@@ -564,7 +337,7 @@ Provides org-id search functionality much faster than org-roams.
 #+begin_src elisp :noweb yes :tangle no
   (defvar-keymap my-org-node-prefix-map
     :doc "Keymap for org-node related commands under C-n"
-    "u" #'get-id-as-link
+    "u" #'my/org-node-get-id-as-link
     "y" #'my/org-node-copy-node-as-markdown-link
     "f" #'org-node-find
     "p" #'my/org-node-set-parent)
@@ -573,42 +346,104 @@ Provides org-id search functionality much faster than org-roams.
 #+end_src
 
 ***** Utility Functions
+replace org-node-get-title
+
 #+NAME: org-node-functions
 #+begin_src elisp :noweb rw :tangle no
   ;;; my/org-node ---
 
-  (defun org-roam-node-to-org-node-node (node)
-    (when node
-      (my/org-roam-get-node-by-id (org-node-get-id node))))
+  (defun my/create-org-id-markdown-link (org-id)
+    (let ((headline-title (get-current-headline-title)))
+      (my/format-markdown-link headline-title "emacs" org-id)))
+
+  (defun my/extract-org-id-from-link (link)
+    "Extract the ID from an org-mode link."
+    (when (string-match "\\[\\[id:\\(.*?\\)\\]\\[.*?\\]\\]" link)
+      (match-string 1 link)))
+
+  (defun my/org-node-get-parent-node (node)
+    (cl-assert (org-mem-entry-p node))
+    (let ((parent_link (org-mem-entry-property "PARENT" node)))
+      (if (stringp parent_link)
+          (org-mem-entry-by-id (my/extract-org-id-from-link parent_link))
+        nil)))
+
+  (defun my/org-node-get-node-parent-hierarchy (node &optional lower-nodes)
+    "Return a decending list of child nodes recursively ending with the initial NODE.
+  LOWER-NODES allow prepending already calculated children and is used internal to keep state."
+    (let ((nodes (cons node (or lower-nodes '()))))
+      (or (when-let ((parent (my/org-node-get-parent-node node)))
+            (my/org-node-get-node-parent-hierarchy parent nodes))
+          nodes)))
+
+  (defun my/org-node-get-full-title (node)
+    "Returns the title of the NODE prepended with its ancestor node titles."
+    (cl-assert (org-mem-entry-p node))
+    (mapconcat #'org-mem-entry-title (my/org-node-get-node-parent-hierarchy node) ":"))
+
+  (defun my/org-node-get-alias (node)
+    "Returns the alias (property) of the NODE."
+    (cl-assert (org-mem-entry-p node))
+    (org-mem-entry-property "ALIAS" node))
+
+  (defun my/org-node-get-shorthand-title (node &optional accumulated-title)
+    "Returns the title of the NODE prepended with its ancestor node titles.
+  Short-circuits if an alias is found, returning the alias and the titles leading up to it."
+    (let ((title (if-let* ((alias (my/org-node-get-alias node)))
+                     alias
+                   (let ((node-title (org-mem-entry-title node)))
+                     (or (when-let ((parent (my/org-node-get-parent-node node)))
+                           (my/org-node-get-shorthand-title parent node-title))
+                         node-title))))
+          (previous-title (if accumulated-title
+                              (concat ":" accumulated-title)
+                            "")))
+      (concat title previous-title)))
+
+  (defun my/org-node-get-parent-title-prefix (node)
+    "Returns a NODE's hierarchical prefix."
+    (when-let ((nodes (butlast (my/org-node-get-node-parent-hierarchy node))))
+      (concat (mapconcat #'org-mem-entry-title nodes ":") ":")))
 
   (defun my/org-node-get-node-markdown-link (node)
-    "Return a markdown link to the ID of a node titled with the nodes full parent path."
-    (when-let ((roam-node (org-roam-node-to-org-node-node node)))
-      (my/format-markdown-link (my/get-shorthand-node-title roam-node) "emacs" (org-mem-entry-id node))))
+    "Return a markdown link to the ID of a NODE titled with the nodes full parent path."
+    (cl-assert (org-mem-entry-p node))
+      (my/format-markdown-link
+       (my/org-node-get-shorthand-title node) "emacs" (org-mem-entry-id node)))
 
-  (defun my/org-node-get-id-as-link ()
-    "Retrieves the org-id of the current headline or note, formats it as a URI, and copies it to the kll-ring."
-    ((interactive))
-    (let* ((org-id (org-id-get nil 'create))
-           (node (org-mem-entry-by-id org-id)))
-      (if node
-          (org-kill-new (my/org-node-get-node-markdown-link node))
-      (org-kill-new (my/create-org-id-markdown-link org-id)))))
+  ;; TODO: Considerm oving
+  (defun my/org-node-title-affixation-fn (node title)
+    (if node
+        (list title title "@")
+      (list title "" "")))
 
   (defun my/org-node-title-affixation-fn (node title)
-    (let ((roam-node (org-roam-node-to-org-node-node node)))
-      (if roam-node
-          (list (my/get-full-node-title roam-node) "" "@")
-        (list title "" ""))))
+    (if node
+        (list (my/org-node-get-full-title node) "" "@")
+      (list title "" "")))
 
-  (defun my/org-node-copy-node-as-markdown-link ()
-       "Prompts the user to select a node which is copied to the kill ring as a customized link."
-       (interactive)
-       (let* ((node (org-roam-node-to-org-node-node (org-node-read)))
-              (node-link (my/get-node-markdown-link node)))
-         (org-kill-new node-link)))
+  (defun my/org-node-nodes-equal-p (node1 node2)
+    "Check if two org-roam nodes NODE1 and NODE2 are equal."
+    (string= (org-mem-entry-id node1)
+             (org-mem-entry-id node2)))
+                                          ; TODO: Add maximum depth parameter with default
+  (defun my/is-child-node-p (possible-child-node parent-node)
+    "Takes two org nodes and determines if second is an ancestor of the first"
+    (if (my/org-node-nodes-equal-p possible-child-node parent-node)
+        t
+      (let ((direct-parent (my/org-node-get-parent-node possible-child-node)))
+        (when direct-parent
+          (if (my/org-node-nodes-equal-p direct-parent parent-node)
+              t
+            (my/is-child-node-p direct-parent parent-node))))))
+
+  ;; TODO: Rename
+  (defun my/is-child-id-p (possible-child-id parent-id)
+    (let ((possible-child-node (org-mem-entry-by-id possible-child-id))
+          (parent-node (org-mem-entry-by-id parent-id)))
+      (when (and possible-child-node parent-node)
+        (my/is-child-node-p possible-child-node parent-node))))
 #+end_src
-
 ***** Interactive Functions
 #+NAME: org-node-interactive
 #+begin_src elisp
@@ -616,11 +451,64 @@ Provides org-id search functionality much faster than org-roams.
     "Find an org-node and add its ID as the parent_id to the current headline."
     (interactive)
     (let* ((node (org-node-read))
-           (node-id (org-node-get-id node))
-           (node-title (org-node-get-title node))
+           (node-id (org-mem-entry-id node))
+           (node-title (org-mem-entry-title node))
            (link (format "[[id:%s][%s]]" node-id node-title)))
       (org-entry-put (point) "PARENT" link)))
 
+  (defun my/org-node-get-id-as-link ()
+      "Retrieves the org-id of the current headline or note, formats it as a URI,
+      and copies it to the kll-ring."
+      (interactive)
+      (let* ((org-id (org-id-get nil 'create))
+             (node (org-mem-entry-by-id org-id)))
+        (if node
+            (org-kill-new (my/org-node-get-node-markdown-link node))
+          (org-kill-new (my/create-org-id-markdown-link org-id)))))
+
+  (defun my/org-node-copy-node-as-markdown-link ()
+       "Prompts the user to select a node which is copied to the kill ring as a customized link."
+       (interactive)
+       (if-let* ((node (org-node-read))
+                 (node-link (my/org-node-get-node-markdown-link node)))
+           (org-kill-new node-link)
+         (message "No such node to copy")))
+#+end_src
+
+***** Org Node Hooks
+#+NAME: org-node-hooks
+#+begin_src elisp
+  ;; Ref: https://github.com/meedstrom/org-mem/blob/main/org-mem.el
+  (defun my/org-node-parent-replace-with-full-path (entry)
+    (let* ((title (org-mem-entry-title entry))
+           (full-title (concat (my/org-node-get-full-title entry) "@"))
+           (existing-hash-value (gethash title org-node--candidate<>entry)))
+      (when existing-hash-value
+        (remhash title org-node--candidate<>entry))
+      (puthash full-title entry org-node--candidate<>entry)))
+
+  (defun my/org-node-parent-hook (parse-results)
+    (seq-let (bad-paths file-data entries links problems) parse-results
+      (dolist (entry entries)
+        (when (and (org-mem-entry-p entry)
+                   (org-mem-entry-id entry))
+          (my/org-node-parent-replace-with-full-path entry)))))
+
+  (define-minor-mode my/org-node-parent-mode
+    "Cache completion candidates every time Org-mem updates its cache.
+
+  Enabling this mode asks org-mem to reset its cache.
+  You should enable `org-mem-updater-mode' at nearly the same time in your
+  init process, because then org-mem will tend to only scan files once
+  rather than twice."
+    :global t
+    (cond
+     (org-node-cache-mode
+      (add-hook 'org-mem-post-full-scan-functions #'my/org-node-parent-hook)
+      (add-hook 'org-mem-post-targeted-scan-functions #'my/org-node-parent-hook))
+     (t
+      (remove-hook 'org-mem-post-full-scan-functions #'my/org-node-parent-hook)
+      (remove-hook 'org-mem-post-targeted-scan-functions #'my/org-node-parent-hook))))
 #+end_src
 
 **** Org-Agenda
