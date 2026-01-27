@@ -263,7 +263,7 @@ Modal editing for default emacs keybindings.
     :hook
     ((text-mode org-mode yaml-mode markdown-mode git-commit-mode) . flymake-aspell-setup))
 
-  (define-key minibuffer-local-map (kbd "C-v") 'yank)
+  (define-key minibuffer-local-map (kbd "M-v") 'yank)
 #+end_src
 *** Org-mode
 **** Org
