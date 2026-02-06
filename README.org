@@ -939,20 +939,6 @@ replace org-node-get-title
     ;; (dap-ui-mode 1)
     )
 
-  (use-package company
-    :after lsp-mode
-    :hook (lsp-mode . company-mode)
-    :bind (:map company-active-map
-           ("<tab>" . company-complete-selection))
-          (:map lsp-mode-map
-           ("<tab>" . company-indent-or-complete-common))
-    :custom
-    (company-minimum-prefix-length 1)
-    (company-idle-delay 0.0))
-
-  (use-package company-box
-    :hook (company-mode . company-box-mode))
-
   (use-package flycheck
     :ensure t
     :init (global-flycheck-mode)
@@ -1085,7 +1071,18 @@ add package runtfmt
     (setf (alist-get 'js2-mode apheleia-mode-alist) 'prettier)
     (apheleia-global-mode +1))
 #+end_src
-
+** Auto Completion
+*** Corfu
+#+begin_src elisp
+  (use-package corfu
+    :init
+    (global-corfu-mode)
+    :custom
+    (corfu-auto t)
+    (corfu-auto-delay 0.0)
+    (corfu-auto-prefix 1)
+    (corfu-cycle t))
+#+end_src
 ** Helpful Minor Modes
 *** Prog-mode
 #+begin_src elisp
