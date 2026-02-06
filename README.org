@@ -962,33 +962,13 @@ replace org-node-get-title
 #+end_src
 *** Python
 #+begin_src elisp
-  (use-package python-mode
-    :hook ((python-mode . lsp-deferred)
-           (python-mode . (lambda ()
-                            (setq comment-style 'plain)
-                            (setq indent-tabs-mode nil)
-                            (setq tab-width 4))))
+  (use-package eglot-python-preset
+    :ensure t
+    :after eglot
     :custom
-    (dap-python-debugger 'debugpy)
+    (eglot-python-preset-lsp-server 'basedpyright) ;; or 'ty
     :config
-    (require 'dap-python))
-
-  (use-package python-mode
-    :hook (python-mode . lsp-deferred)
-    :custom
-    (dap-python-debugger 'debugpy)
-    :config
-    (require 'dap-python))
-
-  (use-package lsp-pyright
-    :after lsp-mode
-    :hook (python-mode . (lambda ()
-                           (require 'lsp-pyright)
-                           (lsp-deferred))))
-
-  (use-package pyvenv
-    :config
-    (pyvenv-mode 1))
+    (eglot-python-preset-setup))
 #+end_src
 *** Clojure(Script) 
 #+begin_src elisp
