@@ -1082,6 +1082,14 @@ add package runtfmt
     (corfu-auto-delay 0.0)
     (corfu-auto-prefix 1)
     (corfu-cycle t))
+  
+  (use-package cape
+    :bind ("M-p" . cape-prefix-map)
+    :init
+    (add-hook 'completion-at-point-functions #'cape-dabbrev)
+    (add-hook 'completion-at-point-functions #'cape-file)
+    (add-hook 'completion-at-point-functions #'cape-elisp-block)
+  )
 #+end_src
 ** Helpful Minor Modes
 *** Prog-mode
