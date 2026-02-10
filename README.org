@@ -1204,6 +1204,16 @@ Colorize nested parens & brackets for ease in programming modes.
            :weight normal)))))
 #+end_src
 
+** Utilities
+*** String Replace
+#+begin_src elisp
+  (use-package visual-replace
+     :defer t
+     :bind (("C-c r" . visual-replace)
+            :map isearch-mode-map
+            ("C-c r" . visual-replace-from-isearch)))
+#+end_src
+
 * Applications
 ** Notmuch
 #+begin_src elisp
