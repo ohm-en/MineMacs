@@ -246,6 +246,14 @@ Modal editing for default emacs keybindings.
     :config
     (envrc-global-mode))
 #+end_src
+*** Org-tick
+#+begin_src elisp
+  (use-package org-tick
+    :quelpa (org-tick
+             :fetcher github
+             :repo "ohm-en/org-ticket") ;; my own package
+    :bind ("C-x j" . org-tick-ticket-choice-map))
+#+end_src
 
 * Editing
 ** Language Integrations 
