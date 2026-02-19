@@ -1178,7 +1178,6 @@ Colorize nested parens & brackets for ease in programming modes.
     :hook (prog-mode . rainbow-delimiters-mode))
 #+end_src
 
-
 *** Flyover
 #+begin_src elisp
   (use-package flyover
@@ -1210,6 +1209,14 @@ Colorize nested parens & brackets for ease in programming modes.
            :foreground "#a8e3a9"
            :height 0.9
            :weight normal)))))
+#+end_src
+*** clipetty
+A minor mode to handle copy/paste with the system clipboard.
+
+#+begin_src elisp
+  (use-package clipetty
+    :ensure t
+    :hook (after-init . global-clipetty-mode))
 #+end_src
 
 ** Utilities
