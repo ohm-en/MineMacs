@@ -1164,7 +1164,8 @@ add package runtfmt
   (use-package avy
     :ensure t
     :config
-    (global-set-key (kbd "C-f") #'avy-goto-char)
+    (global-set-key (kbd "C-f") #'avy-goto-char-timer)
+   (setq avy-timeout-seconds 0.3)
     (setq avy-background t
           avy-style 'at-full))
 
