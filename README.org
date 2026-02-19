@@ -1345,10 +1345,14 @@ A minor mode to handle copy/paste with the system clipboard.
     :ensure t
     :custom
     (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
-    :bind (("C-c p g" . magit-status))
     :bind (:map magit-status-mode-map
                 ("x"   . magit-discard)
-                ("v" . meow-line)))
+                ("v" . meow-line))
+    :config
+    ;; Source: https://github.com/magit/magit/discussions/4657#discussioncomment-2539675
+    (with-eval-after-load 'project
+      (define-key project-prefix-map "m" #'magit-project-status)
+      (add-to-list 'project-switch-commands '(magit-project-status "Magit") t)))
 
   (use-package magit-todos
     :ensure t
