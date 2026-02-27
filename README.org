@@ -1164,8 +1164,10 @@ add package runtfmt
   (use-package avy
     :ensure t
     :config
+    ;; forward-char (C-f) backward-char (C-b) are not used
     (global-set-key (kbd "C-f") #'avy-goto-char-timer)
-   (setq avy-timeout-seconds 0.3)
+    (global-set-key (kbd "C-b") #'avy-pop-mark)
+    (setq avy-timeout-seconds 0.3)
     (setq avy-background t
           avy-style 'at-full))
 
