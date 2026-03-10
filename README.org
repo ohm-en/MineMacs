@@ -1332,11 +1332,6 @@ A minor mode to handle copy/paste with the system clipboard.
       (define-key project-prefix-map "m" #'magit-project-status)
       (add-to-list 'project-switch-commands '(magit-project-status "Magit") t)))
 
-  (use-package magit-todos
-    :ensure t
-    :defer t
-    :hook (magit-mode . magit-todos-mode))
-
   (use-package orgit
     :ensure t)
 #+end_src
