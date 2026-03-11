@@ -259,19 +259,13 @@ Modal editing for default emacs keybindings.
 ** Language Integrations 
 *** Text
 #+begin_src elisp
-  (use-package ispell
-   :init
-   (setq ispell-dictionary "en_US")
-   (setq ispell-program-name "aspell")
-   (setq ispell-silently-savep t))
-
-  (use-package flymake-aspell
+  (use-package jinx
     :ensure t
-    :after flymake
     :hook
-    ((text-mode org-mode yaml-mode markdown-mode git-commit-mode) . flymake-aspell-setup))
-
-  (define-key minibuffer-local-map (kbd "M-v") 'yank)
+    ((org-mode . jinx-mode)
+     (git-commit-mode . jinx-mode)
+     (markdown-mode . jinx-mode)
+     (text-mode . jinx-mode)))
 #+end_src
 *** Org-mode
 **** Org
