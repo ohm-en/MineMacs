@@ -1161,18 +1161,23 @@ add package runtfmt
     (yas/expand-snippet (buffer-string) (point-min) (point-max)))
 #+end_src
 
-*** avy
+*** avy / flash
 #+begin_src elisp
   (use-package avy
-    :ensure t
+    ;; backward-char (C-b) is not used
+    :bind ("C-b" . #'avy-pop-mark) ;; I didn't see a similar command flash.el. This works with it anyways.
     :config
-    ;; forward-char (C-f) backward-char (C-b) are not used
-    (global-set-key (kbd "C-f") #'avy-goto-char-timer)
-    (global-set-key (kbd "C-b") #'avy-pop-mark)
     (setq avy-timeout-seconds 0.3)
     (setq avy-background t
           avy-style 'at-full))
 
+  (use-package flash
+    :commands (flash-jump flash-jump-continue
+                          flash-treesitter)
+    ;; forward-char (C-f) is not used 
+    :bind ("C-f" . flash-jump)
+    :custom
+    (flash-multi-window t))
 #+end_src
 
 *** Rainbow Delimiters
