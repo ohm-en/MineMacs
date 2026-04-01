@@ -342,7 +342,8 @@ Provides org-id search functionality much faster than org-roams.
     "u" #'my/org-node-get-id-as-link
     "y" #'my/org-node-copy-node-as-markdown-link
     "f" #'org-node-find
-    "p" #'my/org-node-set-parent)
+    "c" #'org-capture ;; TODO: Seperate map and define in org-mode use-package
+    "p" #'org-node-hierarchy-set-parent)
 
   (define-key global-map (kbd "C-c n") my-org-node-prefix-map)
 #+end_src
