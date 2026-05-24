@@ -5,7 +5,7 @@
 :END:
 #+TITLE: MineMacs
 #+auto_tangle: t
-#+property: header-args :eval never-export :mkdirp yes :results silent
+#+property: header-args :noweb yes :eval never-export :mkdirp yes :results silent
 
 * The Basics
 ** Lexical Binding
@@ -57,7 +57,6 @@ Some sane defaults copied from crafted-emacs.
 
   ;; Enable savehist-mode for command history
   (savehist-mode 1)
-
 
   ;; To use the system clipboard for copy/paste
   (setq select-enable-clipboard t)
@@ -276,6 +275,7 @@ Modal editing for default emacs keybindings.
    (org-startup-indented t)
    (org-log-into-drawer t)
    :config
+   <<my-org-utility-functions>>
    ;; NOTE: C-c c is already mapped, find a new keybinding for use in meow-mode
    ;; (dw/leader-key-def
    ;;  "c"  '(:which-key "Copy")
@@ -536,6 +536,20 @@ replace org-node-get-title
     (org-super-agenda-mode 1)
     <<org-super-agenda-defun>>)
 #+end_src
+***** Export By Date
+#+begin_src elisp :noweb-ref my-org-utility-functions
+  (defun my/agenda-for-date (date-string)
+    "Return the org-agenda for DATE-STRING (format: YYYY-MM-DD) as a string.
+  Example: (my/agenda-for-date \"2026-05-07\")"
+    (message date-string)
+    (let* ((date (org-read-date nil t date-string))
+           (org-agenda-span 'day)
+           (org-agenda-start-day (format-time-string "%Y-%m-%d" date)))
+      (save-window-excursion
+        (org-agenda-list 1 org-agenda-start-day org-agenda-span)
+        (with-current-buffer org-agenda-buffer-name
+          (buffer-substring-no-properties (point-min) (point-max))))))
+ #+end_src
 **** Org-bullets 
 #+begin_src elisp
   (use-package org-bullets
@@ -1103,11 +1117,13 @@ add package runtfmt
   )
 #+end_src
 ** Helpful Minor Modes
+
 *** Prog-mode
 #+begin_src elisp
-  (use-package hideshow
-     :ensure t
-     :hook (prog-mode . hs-minor-mode))
+  (use-package emacs
+    :init
+    (setq display-line-numbers-type 'relative)
+    (global-display-line-numbers-mode 1))
 #+end_src
 
 *** LISP Navigation
