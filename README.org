@@ -272,6 +272,9 @@ Modal editing for default emacs keybindings.
   (use-package org
    :hook (org-mode . visual-line-mode)
    :custom
+   (org-todo-keywords
+    '((sequence "TODO" "WAITING" "|" "DONE" "CANCELLED")
+      (sequence "COMMIT" "|" "COMMITTED")))
    (org-startup-indented t)
    (org-log-into-drawer t)
    :config
