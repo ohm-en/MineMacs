@@ -316,6 +316,20 @@ Modal editing for default emacs keybindings.
      (add-hook 'org-trigger-hook #'my/org-process-edna)
      (add-hook 'org-after-todo-state-change-hook #'my/org-process-edna))
 #+end_src
+***** Utility Functions
+:PROPERTIES:
+:header-args: :noweb-ref my-org-utility-functions
+:END:
+
+#+begin_src elisp
+  (defun my/org-babel-lob-ingest-current-file ()
+    "Add all named source blocks defined in current file to ‘org-babel-library-of-babel’."
+    (interactive)
+    (if-let ((file (buffer-file-name)))
+        (org-babel-lob-ingest file)
+      (message "Buffer is not a file. Cannot ingest")))
+#+end_src
+
 **** Org-node
 Provides org-id search functionality much faster than org-roams. 
 
